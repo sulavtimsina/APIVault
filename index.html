@@ -1155,7 +1155,7 @@ body {
     document.getElementById('curlModal').classList.remove('visible');
   };
 
-  window._importCurl = function() {
+  window._importCurl = async function() {
     const curlStr = document.getElementById('curlInput').value.trim();
     if (!curlStr) { alert('Please paste a cURL command.'); return; }
 
@@ -1165,7 +1165,6 @@ body {
     const selectVal = document.getElementById('curlSessionSelect').value;
 
     let targetSession;
-    let isAdhoc = true;
 
     if (selectVal === '__new__') {
       const name = document.getElementById('curlNewSessionName').value.trim() || 'Untitled Session';
@@ -1181,9 +1180,24 @@ body {
       const idx = parseInt(selectVal.split(':')[1]);
       targetSession = adhocSessions[idx];
     } else if (selectVal.startsWith('saved:')) {
-      // Can't modify saved sessions from browser — create adhoc copy or add to adhoc
-      alert('To add calls to a saved session, use the CLI:\n\npython3 import_session.py curl "' + selectVal.split(':')[1] + '"');
-      return;
+      const slug = selectVal.split(':')[1];
+      // Fetch the saved session and create an in-memory copy to append to
+      try {
+        const resp = await fetch(`data/${slug}/session.json`);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const saved = await resp.json();
+        targetSession = {
+          name: saved.name,
+          importedAt: saved.importedAt,
+          platform: saved.platform,
+          slug: slug,
+          calls: [...saved.calls]
+        };
+        adhocSessions.push(targetSession);
+      } catch (e) {
+        alert('Failed to load session: ' + e.message);
+        return;
+      }
     }
 
     if (!targetSession) return;
