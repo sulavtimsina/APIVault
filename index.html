@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APIVault — API Documentation Viewer</title>
+<style>
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --bg-panel: #1e1e3a;
+  --bg-hover: #2a2a4a;
+  --bg-selected: #0f3460;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0b8;
+  --text-muted: #6a6a8a;
+  --border: #2a2a4a;
+  --accent: #5dade2;
+  --green: #2ecc71;
+  --yellow: #f1c40f;
+  --orange: #e67e22;
+  --red: #e74c3c;
+  --purple: #9b59b6;
+  --blue: #5dade2;
+  --json-key: #5dade2;
+  --json-string: #2ecc71;
+  --json-number: #e67e22;
+  --json-bool: #9b59b6;
+  --json-null: #6a6a8a;
+  --sidebar-width: 260px;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Layout */
+.app { display: flex; height: 100vh; }
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-header .logo {
+  font-size: 18px;
+  color: var(--accent);
+}
+
+.sidebar-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.sidebar-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.sidebar-item:hover { background: var(--bg-hover); }
+.sidebar-item.active { background: var(--bg-selected); border-left-color: var(--accent); }
+
+.sidebar-item .name {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-item .meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-ios { background: #2a4a6a; color: #5dade2; }
+.badge-android { background: #2a5a2a; color: #2ecc71; }
+.badge-unknown { background: #3a3a3a; color: #a0a0a0; }
+.badge-adhoc { background: #4a2a4a; color: #c39bd3; }
+
+/* Main area */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Banner */
+.banner {
+  background: var(--bg-tertiary);
+  padding: 10px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
+  display: none;
+}
+
+.banner a { color: var(--accent); }
+
+/* Call list */
+.call-list-container {
+  height: 40%;
+  min-height: 100px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.call-list-header {
+  display: flex;
+  background: var(--bg-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.call-list-header > div { padding: 8px 12px; }
+.col-id { width: 60px; min-width: 60px; }
+.col-method { width: 70px; min-width: 70px; }
+.col-url { flex: 1; min-width: 0; }
+.col-status { width: 70px; min-width: 70px; text-align: center; }
+
+.call-list {
+  flex: 1;
+  overflow-y: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.call-row {
+  display: flex;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(42, 42, 74, 0.5);
+  transition: background 0.1s;
+}
+
+.call-row:hover { background: var(--bg-hover); }
+.call-row.active { background: var(--bg-selected); }
+
+.call-row > div {
+  padding: 6px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Method colors */
+.method-get { color: var(--blue); }
+.method-post { color: var(--green); }
+.method-put { color: var(--yellow); }
+.method-patch { color: var(--yellow); }
+.method-delete { color: var(--red); }
+.method-options { color: var(--text-muted); }
+.method-head { color: var(--text-muted); }
+
+/* Status colors */
+.status-2xx { color: var(--green); }
+.status-3xx { color: var(--yellow); }
+.status-4xx { color: var(--orange); }
+.status-5xx { color: var(--red); }
+
+/* Detail panel */
+.detail-panel {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.detail-half {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+  min-width: 0;
+}
+
+.detail-half:first-child { border-right: 1px solid var(--border); }
+
+.detail-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 10px 16px 6px;
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.detail-label .url-preview {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  font-weight: 400;
+  max-width: 60%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.section {
+  margin: 0 16px 12px;
+}
+
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 6px 0;
+  user-select: none;
+}
+
+.section-toggle:hover { color: var(--text-primary); }
+
+.section-toggle .arrow {
+  font-size: 10px;
+  transition: transform 0.15s;
+  display: inline-block;
+  width: 12px;
+}
+
+.section-toggle .arrow.collapsed { transform: rotate(-90deg); }
+
+.section-content {
+  overflow: hidden;
+  transition: max-height 0.2s ease;
+}
+
+.section-content.collapsed { max-height: 0 !important; overflow: hidden; }
+
+.headers-table {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.headers-table tr:hover { background: var(--bg-hover); }
+
+.headers-table td {
+  padding: 3px 8px;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(42, 42, 74, 0.3);
+}
+
+.headers-table .hdr-name {
+  color: var(--accent);
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 16px;
+}
+
+.headers-table .hdr-value {
+  color: var(--text-secondary);
+  word-break: break-all;
+}
+
+.body-content {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 8px 12px;
+  background: var(--bg-panel);
+  border-radius: 6px;
+  position: relative;
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.copy-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* JSON highlighting */
+.json-key { color: var(--json-key); }
+.json-string { color: var(--json-string); }
+.json-number { color: var(--json-number); }
+.json-bool { color: var(--json-bool); }
+.json-null { color: var(--json-null); font-style: italic; }
+.json-brace { color: var(--text-muted); }
+
+/* Empty / placeholder states */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 40px;
+  line-height: 1.8;
+}
+
+/* Drop zone */
+.drop-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 52, 96, 0.85);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent);
+  border: 3px dashed var(--accent);
+  margin: 12px;
+  border-radius: 12px;
+}
+
+.drop-overlay.visible { display: flex; }
+
+/* Resize handle */
+.resize-handle {
+  height: 4px;
+  cursor: ns-resize;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+.resize-handle:hover { background: var(--accent); }
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span class="logo">&#9670;</span> APIVault
+    </div>
+    <div class="sidebar-list" id="sidebarList"></div>
+  </aside>
+
+  <main class="main">
+    <div class="banner" id="banner"></div>
+
+    <div class="call-list-container" id="callListContainer">
+      <div class="call-list-header">
+        <div class="col-id">ID</div>
+        <div class="col-method">Method</div>
+        <div class="col-url">URL</div>
+        <div class="col-status">Status</div>
+      </div>
+      <div class="call-list" id="callList">
+        <div class="empty-state">Select a session from the sidebar<br>or drag &amp; drop Proxyman files here</div>
+      </div>
+    </div>
+
+    <div class="resize-handle" id="resizeHandle"></div>
+
+    <div class="detail-panel" id="detailPanel">
+      <div class="detail-half" id="detailRequest">
+        <div class="empty-state">Select an API call to view details</div>
+      </div>
+      <div class="detail-half" id="detailResponse">
+        <div class="empty-state"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="drop-overlay" id="dropOverlay">Drop Proxyman files or folder here</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // --- State ---
+  let sessions = [];
+  let currentSession = null;
+  let currentCallIndex = -1;
+  let adhocSession = null;
+
+  // --- Initialization ---
+  async function init() {
+    detectFileProtocol();
+    await loadSessions();
+    setupKeyboardNav();
+    setupDragDrop();
+    setupResize();
+  }
+
+  function detectFileProtocol() {
+    if (location.protocol === 'file:') {
+      const banner = document.getElementById('banner');
+      banner.style.display = 'block';
+      banner.innerHTML = 'Opened via <code>file://</code> — fetch() won\'t work. ' +
+        'Run <code>python3 -m http.server 8080</code> and open ' +
+        '<a href="http://localhost:8080">http://localhost:8080</a>, ' +
+        'or drag &amp; drop Proxyman files directly onto this page.';
+    }
+  }
+
+  async function loadSessions() {
+    try {
+      const resp = await fetch('data/sessions.json');
+      if (!resp.ok) return;
+      const data = await resp.json();
+      sessions = data.sessions || [];
+      renderSidebar();
+    } catch (e) {
+      // file:// or no sessions yet — that's fine
+    }
+  }
+
+  // --- Sidebar ---
+  function renderSidebar() {
+    const list = document.getElementById('sidebarList');
+    list.innerHTML = '';
+
+    // Render persisted sessions
+    sessions.forEach((s, i) => {
+      const item = createSidebarItem(s.name, s.platform, s.callCount, () => selectSession(s.slug, i));
+      if (currentSession && currentSession.slug === s.slug) item.classList.add('active');
+      list.appendChild(item);
+    });
+
+    // Render adhoc session if present
+    if (adhocSession) {
+      const item = createSidebarItem(adhocSession.name, 'adhoc', adhocSession.calls.length, () => selectAdhocSession());
+      if (currentSession && currentSession._adhoc) item.classList.add('active');
+      list.appendChild(item);
+    }
+  }
+
+  function createSidebarItem(name, platform, count, onClick) {
+    const item = document.createElement('div');
+    item.className = 'sidebar-item';
+    item.onclick = onClick;
+
+    const badgeClass = platform === 'ios' ? 'badge-ios'
+      : platform === 'android' ? 'badge-android'
+      : platform === 'adhoc' ? 'badge-adhoc'
+      : 'badge-unknown';
+
+    item.innerHTML = `
+      <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
+      <div class="meta">
+        <span class="badge ${badgeClass}">${escapeHtml(platform)}</span>
+        <span>${count} call${count !== 1 ? 's' : ''}</span>
+      </div>
+    `;
+    return item;
+  }
+
+  async function selectSession(slug, index) {
+    try {
+      const resp = await fetch(`data/${slug}/session.json`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const session = await resp.json();
+      session.slug = slug;
+      currentSession = session;
+      currentCallIndex = -1;
+      renderSidebar();
+      renderCallList(session.calls);
+      clearDetail();
+    } catch (e) {
+      console.error('Failed to load session:', e);
+    }
+  }
+
+  function selectAdhocSession() {
+    if (!adhocSession) return;
+    currentSession = { ...adhocSession, _adhoc: true };
+    currentCallIndex = -1;
+    renderSidebar();
+    renderCallList(adhocSession.calls);
+    clearDetail();
+  }
+
+  // --- Call list ---
+  function renderCallList(calls) {
+    const list = document.getElementById('callList');
+    list.innerHTML = '';
+
+    if (!calls || calls.length === 0) {
+      list.innerHTML = '<div class="empty-state">No API calls in this session</div>';
+      return;
+    }
+
+    calls.forEach((call, i) => {
+      const row = document.createElement('div');
+      row.className = 'call-row';
+      row.dataset.index = i;
+      row.onclick = () => selectCall(i);
+
+      const method = call.request.method.toUpperCase();
+      const methodClass = 'method-' + method.toLowerCase();
+      const statusCode = call.response ? call.response.statusCode : 0;
+      const statusClass = statusCode >= 500 ? 'status-5xx'
+        : statusCode >= 400 ? 'status-4xx'
+        : statusCode >= 300 ? 'status-3xx'
+        : statusCode >= 200 ? 'status-2xx'
+        : '';
+
+      // Extract path from URL
+      let urlPath = call.request.url;
+      try {
+        const u = new URL(call.request.url);
+        urlPath = u.pathname + u.search;
+      } catch (e) { /* keep full url */ }
+
+      row.innerHTML = `
+        <div class="col-id">${escapeHtml(call.id)}</div>
+        <div class="col-method ${methodClass}">${method}</div>
+        <div class="col-url" title="${escapeHtml(call.request.url)}">${escapeHtml(urlPath)}</div>
+        <div class="col-status ${statusClass}">${statusCode || '—'}</div>
+      `;
+      list.appendChild(row);
+    });
+  }
+
+  function selectCall(index) {
+    const calls = currentSession ? currentSession.calls : [];
+    if (index < 0 || index >= calls.length) return;
+
+    currentCallIndex = index;
+    const call = calls[index];
+
+    // Highlight active row
+    document.querySelectorAll('.call-row').forEach((r, i) => {
+      r.classList.toggle('active', i === index);
+    });
+
+    // Scroll active row into view
+    const activeRow = document.querySelector('.call-row.active');
+    if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
+
+    renderDetail(call);
+  }
+
+  // --- Detail panel ---
+  function clearDetail() {
+    document.getElementById('detailRequest').innerHTML = '<div class="empty-state">Select an API call to view details</div>';
+    document.getElementById('detailResponse').innerHTML = '<div class="empty-state"></div>';
+  }
+
+  function renderDetail(call) {
+    const reqPanel = document.getElementById('detailRequest');
+    const respPanel = document.getElementById('detailResponse');
+
+    // Request
+    const method = call.request.method.toUpperCase();
+    const methodClass = 'method-' + method.toLowerCase();
+    let reqHtml = `<div class="detail-label">
+      <span>Request</span>
+      <span class="url-preview"><span class="${methodClass}">${method}</span> ${escapeHtml(call.request.url)}</span>
+    </div>`;
+    reqHtml += renderSection('Headers', renderHeadersTable(call.request.headers), true);
+    reqHtml += renderSection('Body', renderBody(call.request.body), false);
+    reqPanel.innerHTML = reqHtml;
+
+    // Response
+    const sc = call.response ? call.response.statusCode : 0;
+    const statusClass = sc >= 500 ? 'status-5xx' : sc >= 400 ? 'status-4xx' : sc >= 300 ? 'status-3xx' : sc >= 200 ? 'status-2xx' : '';
+    const statusText = call.response ? call.response.statusText : '';
+    let respHtml = `<div class="detail-label">
+      <span>Response</span>
+      <span class="${statusClass}" style="font-family:var(--font-mono);font-size:12px;text-transform:none;letter-spacing:0">${sc} ${escapeHtml(statusText)}</span>
+    </div>`;
+    if (call.response) {
+      respHtml += renderSection('Headers', renderHeadersTable(call.response.headers), true);
+      respHtml += renderSection('Body', renderBody(call.response.body), false);
+    }
+    respPanel.innerHTML = respHtml;
+
+    // Wire up toggles
+    wireToggles(reqPanel);
+    wireToggles(respPanel);
+  }
+
+  function renderSection(title, content, startCollapsed) {
+    const arrowClass = startCollapsed ? 'arrow collapsed' : 'arrow';
+    const collapsedClass = startCollapsed ? 'collapsed' : '';
+    return `
+      <div class="section">
+        <div class="section-toggle" data-collapsed="${startCollapsed}">
+          <span class="${arrowClass}">&#9660;</span> ${title}
+        </div>
+        <div class="section-content ${collapsedClass}">
+          ${content}
+        </div>
+      </div>
+    `;
+  }
+
+  function wireToggles(container) {
+    container.querySelectorAll('.section-toggle').forEach(toggle => {
+      toggle.addEventListener('click', () => {
+        const content = toggle.nextElementSibling;
+        const arrow = toggle.querySelector('.arrow');
+        const collapsed = content.classList.toggle('collapsed');
+        arrow.classList.toggle('collapsed', collapsed);
+        toggle.dataset.collapsed = collapsed;
+      });
+    });
+  }
+
+  function renderHeadersTable(headers) {
+    if (!headers || Object.keys(headers).length === 0) {
+      return '<div style="padding:8px;color:var(--text-muted);font-size:12px">No headers</div>';
+    }
+    let html = '<table class="headers-table">';
+    for (const [key, val] of Object.entries(headers)) {
+      const values = Array.isArray(val) ? val : [val];
+      for (const v of values) {
+        html += `<tr><td class="hdr-name">${escapeHtml(key)}</td><td class="hdr-value">${escapeHtml(String(v))}</td></tr>`;
+      }
+    }
+    html += '</table>';
+    return html;
+  }
+
+  function renderBody(body) {
+    if (body === null || body === undefined) {
+      return '<div style="padding:8px;color:var(--text-muted);font-size:12px">No body</div>';
+    }
+
+    const isJson = typeof body === 'object';
+    const raw = isJson ? JSON.stringify(body, null, 2) : String(body);
+    const highlighted = isJson ? highlightJson(body) : escapeHtml(raw);
+    const copyId = 'copy-' + Math.random().toString(36).slice(2, 8);
+
+    return `
+      <div class="body-content" id="${copyId}-body">
+        <button class="copy-btn" onclick="window._copyBody('${copyId}-body')">Copy</button>
+        ${highlighted}
+      </div>
+    `;
+  }
+
+  // Global copy handler
+  window._copyBody = function(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const text = el.textContent.replace(/^Copy\s*/, '');
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = el.querySelector('.copy-btn');
+      if (btn) {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      }
+    });
+  };
+
+  // --- JSON syntax highlighting ---
+  function highlightJson(obj) {
+    const json = JSON.stringify(obj, null, 2);
+    return syntaxHighlight(json);
+  }
+
+  function syntaxHighlight(json) {
+    // Escape HTML first, then apply highlighting via regex
+    const escaped = escapeHtml(json);
+    return escaped.replace(
+      /("(?:\\.|[^"\\])*")\s*:/g,
+      '<span class="json-key">$1</span>:'
+    ).replace(
+      /:\s*("(?:\\.|[^"\\])*")/g,
+      (match, p1) => ': <span class="json-string">' + p1 + '</span>'
+    ).replace(
+      /:\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g,
+      ': <span class="json-number">$1</span>'
+    ).replace(
+      /:\s*(true|false)/g,
+      ': <span class="json-bool">$1</span>'
+    ).replace(
+      /:\s*(null)/g,
+      ': <span class="json-null">$1</span>'
+    ).replace(
+      // Highlight values in arrays (not after colon)
+      /\[\s*/g, '<span class="json-brace">[</span> '
+    ).replace(
+      /\s*\]/g, ' <span class="json-brace">]</span>'
+    ).replace(
+      /(?<!=["\\])\{/g, '<span class="json-brace">{</span>'
+    ).replace(
+      /\}(?!["\\])/g, '<span class="json-brace">}</span>'
+    );
+  }
+
+  // A more robust approach: highlight at token level
+  function highlightJsonRobust(obj, indent) {
+    indent = indent || 0;
+    const pad = '  '.repeat(indent);
+    const pad1 = '  '.repeat(indent + 1);
+
+    if (obj === null) return '<span class="json-null">null</span>';
+    if (typeof obj === 'boolean') return `<span class="json-bool">${obj}</span>`;
+    if (typeof obj === 'number') return `<span class="json-number">${obj}</span>`;
+    if (typeof obj === 'string') return `<span class="json-string">"${escapeHtml(obj)}"</span>`;
+
+    if (Array.isArray(obj)) {
+      if (obj.length === 0) return '<span class="json-brace">[]</span>';
+      const items = obj.map(item => pad1 + highlightJsonRobust(item, indent + 1));
+      return '<span class="json-brace">[</span>\n' + items.join(',\n') + '\n' + pad + '<span class="json-brace">]</span>';
+    }
+
+    if (typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      if (keys.length === 0) return '<span class="json-brace">{}</span>';
+      const entries = keys.map(key => {
+        const val = highlightJsonRobust(obj[key], indent + 1);
+        return pad1 + '<span class="json-key">"' + escapeHtml(key) + '"</span>: ' + val;
+      });
+      return '<span class="json-brace">{</span>\n' + entries.join(',\n') + '\n' + pad + '<span class="json-brace">}</span>';
+    }
+
+    return escapeHtml(String(obj));
+  }
+
+  // Override with robust version
+  function highlightJson(obj) {
+    return highlightJsonRobust(obj, 0);
+  }
+
+  // --- Keyboard navigation ---
+  function setupKeyboardNav() {
+    document.addEventListener('keydown', (e) => {
+      if (!currentSession) return;
+      const calls = currentSession.calls;
+      if (!calls || calls.length === 0) return;
+
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        e.preventDefault();
+        const next = Math.min(currentCallIndex + 1, calls.length - 1);
+        selectCall(next);
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        e.preventDefault();
+        const prev = Math.max(currentCallIndex - 1, 0);
+        selectCall(prev);
+      }
+    });
+  }
+
+  // --- Drag & Drop ---
+  function setupDragDrop() {
+    const overlay = document.getElementById('dropOverlay');
+    let dragCounter = 0;
+
+    document.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      dragCounter++;
+      overlay.classList.add('visible');
+    });
+
+    document.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        overlay.classList.remove('visible');
+      }
+    });
+
+    document.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+
+    document.addEventListener('drop', async (e) => {
+      e.preventDefault();
+      dragCounter = 0;
+      overlay.classList.remove('visible');
+
+      const files = await collectDroppedFiles(e.dataTransfer);
+      if (files.length > 0) {
+        parseDroppedFiles(files);
+      }
+    });
+  }
+
+  async function collectDroppedFiles(dataTransfer) {
+    const files = [];
+    const items = dataTransfer.items;
+
+    if (items) {
+      const entries = [];
+      for (let i = 0; i < items.length; i++) {
+        const entry = items[i].webkitGetAsEntry ? items[i].webkitGetAsEntry() : null;
+        if (entry) entries.push(entry);
+      }
+
+      for (const entry of entries) {
+        if (entry.isFile) {
+          const file = await getFile(entry);
+          if (file.name.endsWith('.txt')) files.push(file);
+        } else if (entry.isDirectory) {
+          const dirFiles = await readDirectory(entry);
+          files.push(...dirFiles.filter(f => f.name.endsWith('.txt')));
+        }
+      }
+    } else {
+      for (const file of dataTransfer.files) {
+        if (file.name.endsWith('.txt')) files.push(file);
+      }
+    }
+
+    return files;
+  }
+
+  function getFile(entry) {
+    return new Promise((resolve, reject) => entry.file(resolve, reject));
+  }
+
+  function readDirectory(dirEntry) {
+    return new Promise((resolve) => {
+      const reader = dirEntry.createReader();
+      const allFiles = [];
+      function readBatch() {
+        reader.readEntries(async (entries) => {
+          if (entries.length === 0) {
+            resolve(allFiles);
+            return;
+          }
+          for (const entry of entries) {
+            if (entry.isFile) {
+              const file = await getFile(entry);
+              allFiles.push(file);
+            }
+          }
+          readBatch();
+        });
+      }
+      readBatch();
+    });
+  }
+
+  async function parseDroppedFiles(files) {
+    // Pair files by [ID] Request/Response pattern
+    const pattern = /^\[(\d+)\]\s+(Request|Response)\s+-\s+(.+)\.txt$/;
+    const fileMap = {};
+
+    for (const file of files) {
+      const m = file.name.match(pattern);
+      if (!m) continue;
+      const [, id, kind] = m;
+      if (!fileMap[id]) fileMap[id] = {};
+      fileMap[id][kind.toLowerCase()] = file;
+    }
+
+    const ids = Object.keys(fileMap).sort((a, b) => parseInt(a) - parseInt(b));
+    if (ids.length === 0) {
+      alert('No valid Proxyman request/response files found. Expected format: [ID] Request - *.txt');
+      return;
+    }
+
+    const calls = [];
+    for (const id of ids) {
+      const pair = fileMap[id];
+      let req = null, resp = null;
+
+      if (pair.request) {
+        const text = await pair.request.text();
+        req = parseHttpMessage(text, true);
+      }
+      if (pair.response) {
+        const text = await pair.response.text();
+        resp = parseHttpMessage(text, false);
+      }
+
+      if (req) {
+        calls.push({
+          id: id,
+          request: req,
+          response: resp || { statusCode: 0, statusText: 'No Response', headers: {}, body: null }
+        });
+      }
+    }
+
+    if (calls.length === 0) {
+      alert('Could not parse any API calls from the dropped files.');
+      return;
+    }
+
+    // Detect platform
+    let platform = 'unknown';
+    for (const call of calls) {
+      const hdrs = call.request.headers;
+      for (const [k, v] of Object.entries(hdrs)) {
+        if (k.toLowerCase() === 'x-chplat') {
+          platform = String(v).toLowerCase();
+          break;
+        }
+        if (k.toLowerCase() === 'x-device-type') {
+          const val = String(v).toLowerCase();
+          if (val.includes('ios')) { platform = 'ios'; break; }
+          if (val.includes('android')) { platform = 'android'; break; }
+        }
+      }
+      if (platform !== 'unknown') break;
+    }
+
+    adhocSession = {
+      name: 'Ad-hoc Import',
+      importedAt: new Date().toISOString(),
+      platform: platform,
+      calls: calls
+    };
+
+    selectAdhocSession();
+    renderSidebar();
+  }
+
+  function parseHttpMessage(text, isRequest) {
+    // Split on blank line
+    const splitIdx = text.search(/\r?\n\r?\n/);
+    const headerBlock = splitIdx >= 0 ? text.substring(0, splitIdx) : text;
+    const bodyRaw = splitIdx >= 0 ? text.substring(text.indexOf('\n\n', splitIdx - 1) + 2) : '';
+    // More accurate split
+    const parts = text.split(/\r?\n\r?\n/);
+    const hdrPart = parts[0];
+    const bodyPart = parts.slice(1).join('\n\n').trim();
+
+    const lines = hdrPart.split(/\r?\n/);
+    const firstLine = lines[0].trim();
+    const headers = {};
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const colon = line.indexOf(':');
+      if (colon === -1) continue;
+      const key = line.substring(0, colon).trim();
+      const val = line.substring(colon + 1).trim();
+      if (headers[key] !== undefined) {
+        if (Array.isArray(headers[key])) headers[key].push(val);
+        else headers[key] = [headers[key], val];
+      } else {
+        headers[key] = val;
+      }
+    }
+
+    let body = null;
+    if (bodyPart) {
+      try { body = JSON.parse(bodyPart); }
+      catch (e) { body = bodyPart; }
+    }
+
+    if (isRequest) {
+      const m = firstLine.match(/^(\S+)\s+(\S+)\s+HTTP\/[\d.]+/);
+      const method = m ? m[1] : 'GET';
+      const path = m ? m[2] : '/';
+      let host = '';
+      for (const [k, v] of Object.entries(headers)) {
+        if (k.toLowerCase() === 'host') { host = Array.isArray(v) ? v[0] : v; break; }
+      }
+      const url = host ? 'https://' + host + path : path;
+      return { method, url, headers, body };
+    } else {
+      const m = firstLine.match(/^HTTP\/[\d.]+\s+(\d+)\s*(.*)/);
+      const statusCode = m ? parseInt(m[1]) : 0;
+      const statusText = m ? m[2].trim() : '';
+      return { statusCode, statusText, headers, body };
+    }
+  }
+
+  // --- Resize handle ---
+  function setupResize() {
+    const handle = document.getElementById('resizeHandle');
+    const container = document.querySelector('.main');
+    const callListContainer = document.getElementById('callListContainer');
+    let startY, startHeight;
+
+    handle.addEventListener('mousedown', (e) => {
+      startY = e.clientY;
+      startHeight = callListContainer.offsetHeight;
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      e.preventDefault();
+    });
+
+    function onMouseMove(e) {
+      const delta = e.clientY - startY;
+      const newHeight = Math.max(80, Math.min(startHeight + delta, container.offsetHeight - 100));
+      callListContainer.style.height = newHeight + 'px';
+      callListContainer.style.flex = 'none';
+    }
+
+    function onMouseUp() {
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+    }
+  }
+
+  // --- Utilities ---
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // --- Start ---
+  init();
+})();
+</script>
+</body>
+</html>
