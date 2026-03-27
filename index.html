@@ -682,11 +682,12 @@ body {
   let sessions = [];
   let currentSession = null;
   let currentCallIndex = -1;
-  let adhocSessions = [];
+  let serverAvailable = false;
 
   // --- Init ---
   async function init() {
     detectFileProtocol();
+    await checkServer();
     await loadSessions();
     setupKeyboardNav();
     setupDragDrop();
@@ -694,14 +695,24 @@ body {
     setupCurlSessionSelect();
   }
 
+  async function checkServer() {
+    // Probe the server API to see if server.py is running
+    try {
+      const resp = await fetch('/api/add-call', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      // Even a 400 means the server is up
+      serverAvailable = true;
+    } catch (e) {
+      serverAvailable = false;
+    }
+  }
+
   function detectFileProtocol() {
     if (location.protocol === 'file:') {
       const banner = document.getElementById('banner');
       banner.style.display = 'block';
       banner.innerHTML = 'Opened via <code>file://</code> — fetch() won\'t work. ' +
-        'Run <code>python3 -m http.server 8080</code> and open ' +
-        '<a href="http://localhost:8080">http://localhost:8080</a>, ' +
-        'or use the <b>+ cURL</b> button or drag &amp; drop to add API calls.';
+        'Run <code>python3 server.py</code> and open ' +
+        '<a href="http://localhost:8080">http://localhost:8080</a> to enable saving.';
     }
   }
 
@@ -722,13 +733,7 @@ body {
 
     sessions.forEach((s) => {
       const item = createSidebarItem(s.name, s.platform, s.callCount, () => selectSession(s.slug));
-      if (currentSession && !currentSession._adhoc && currentSession.slug === s.slug) item.classList.add('active');
-      list.appendChild(item);
-    });
-
-    adhocSessions.forEach((s, i) => {
-      const item = createSidebarItem(s.name, 'adhoc', s.calls.length, () => selectAdhoc(i));
-      if (currentSession && currentSession._adhocIndex === i) item.classList.add('active');
+      if (currentSession && currentSession.slug === s.slug) item.classList.add('active');
       list.appendChild(item);
     });
 
@@ -769,16 +774,6 @@ body {
     } catch (e) {
       console.error('Failed to load session:', e);
     }
-  }
-
-  function selectAdhoc(index) {
-    const s = adhocSessions[index];
-    if (!s) return;
-    currentSession = { ...s, _adhoc: true, _adhocIndex: index };
-    currentCallIndex = -1;
-    renderSidebar();
-    renderCallList(s.calls);
-    clearDetail();
   }
 
   // --- Call list ---
@@ -1129,13 +1124,6 @@ body {
       select.appendChild(opt);
     });
 
-    adhocSessions.forEach((s, i) => {
-      const opt = document.createElement('option');
-      opt.value = 'adhoc:' + i;
-      opt.textContent = s.name + ' (in-memory)';
-      select.appendChild(opt);
-    });
-
     // Restore selection
     if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
       select.value = currentVal;
@@ -1164,64 +1152,50 @@ body {
 
     const selectVal = document.getElementById('curlSessionSelect').value;
 
-    let targetSession;
+    let name, platform, slug;
 
     if (selectVal === '__new__') {
-      const name = document.getElementById('curlNewSessionName').value.trim() || 'Untitled Session';
-      const platform = document.getElementById('curlPlatform').value || detectPlatformFromHeaders(req.headers) || 'unknown';
-      targetSession = {
-        name: name,
-        importedAt: new Date().toISOString(),
-        platform: platform,
-        calls: []
-      };
-      adhocSessions.push(targetSession);
-    } else if (selectVal.startsWith('adhoc:')) {
-      const idx = parseInt(selectVal.split(':')[1]);
-      targetSession = adhocSessions[idx];
+      name = document.getElementById('curlNewSessionName').value.trim() || 'Untitled Session';
+      platform = document.getElementById('curlPlatform').value || detectPlatformFromHeaders(req.headers) || 'unknown';
+      slug = slugify(name);
     } else if (selectVal.startsWith('saved:')) {
-      const slug = selectVal.split(':')[1];
-      // Fetch the saved session and create an in-memory copy to append to
-      try {
-        const resp = await fetch(`data/${slug}/session.json`);
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-        const saved = await resp.json();
-        targetSession = {
-          name: saved.name,
-          importedAt: saved.importedAt,
-          platform: saved.platform,
-          slug: slug,
-          calls: [...saved.calls]
-        };
-        adhocSessions.push(targetSession);
-      } catch (e) {
-        alert('Failed to load session: ' + e.message);
-        return;
-      }
+      slug = selectVal.split(':')[1];
+      const s = sessions.find(s => s.slug === slug);
+      name = s ? s.name : slug;
+      platform = s ? s.platform : 'unknown';
+    } else {
+      return;
     }
 
-    if (!targetSession) return;
+    // Save to server
+    try {
+      const resp = await fetch('/api/add-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, platform, request: req })
+      });
 
-    // Generate call ID
-    let maxId = 0;
-    targetSession.calls.forEach(c => { const n = parseInt(c.id); if (n > maxId) maxId = n; });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server error ${resp.status}`);
+      }
 
-    const call = {
-      id: String(maxId + 1),
-      request: req,
-      response: { statusCode: 0, statusText: 'Pending', headers: {}, body: null }
-    };
+      const result = await resp.json();
+      slug = result.slug;
 
-    targetSession.calls.push(call);
+      // Reload sessions manifest and select the session
+      await loadSessions();
+      await selectSession(slug);
 
-    // Select this session
-    const adhocIdx = adhocSessions.indexOf(targetSession);
-    currentSession = { ...targetSession, _adhoc: true, _adhocIndex: adhocIdx };
-    currentCallIndex = targetSession.calls.length - 1;
+      // Select the newly added call (last one)
+      if (currentSession && currentSession.calls.length > 0) {
+        selectCall(currentSession.calls.length - 1);
+      }
 
-    renderSidebar();
-    renderCallList(targetSession.calls);
-    selectCall(currentCallIndex);
+    } catch (e) {
+      alert('Failed to save: ' + e.message + '\n\nMake sure server.py is running:\n  python3 server.py');
+      return;
+    }
 
     window._closeCurlModal();
   };
@@ -1250,7 +1224,7 @@ body {
     document.getElementById('responseModal').classList.remove('visible');
   };
 
-  window._saveResponse = function() {
+  window._saveResponse = async function() {
     if (!currentSession || currentCallIndex < 0) return;
 
     const statusCode = parseInt(document.getElementById('responseStatus').value) || 200;
@@ -1262,28 +1236,35 @@ body {
       catch (e) { body = bodyStr; }
     }
 
-    const statusTexts = {200:'OK',201:'Created',204:'No Content',400:'Bad Request',
-      401:'Unauthorized',403:'Forbidden',404:'Not Found',500:'Internal Server Error'};
-
     const call = currentSession.calls[currentCallIndex];
-    call.response = {
-      statusCode: statusCode,
-      statusText: statusTexts[statusCode] || '',
-      headers: (call.response && call.response.headers) || {},
-      body: body
-    };
+    const slug = currentSession.slug;
 
-    // Also update in adhocSessions if it's an adhoc session
-    if (currentSession._adhoc && currentSession._adhocIndex !== undefined) {
-      const adhoc = adhocSessions[currentSession._adhocIndex];
-      if (adhoc && adhoc.calls[currentCallIndex]) {
-        adhoc.calls[currentCallIndex].response = call.response;
-      }
+    if (!slug) {
+      alert('Cannot save response: session has no slug.');
+      return;
     }
 
-    renderCallList(currentSession.calls);
-    selectCall(currentCallIndex);
-    renderSidebar();
+    // Save to server
+    try {
+      const resp = await fetch('/api/update-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug, callId: call.id, statusCode, body })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server error ${resp.status}`);
+      }
+
+      // Reload the session to reflect saved state
+      await selectSession(slug);
+      selectCall(currentCallIndex);
+
+    } catch (e) {
+      alert('Failed to save: ' + e.message + '\n\nMake sure server.py is running:\n  python3 server.py');
+      return;
+    }
 
     window._closeResponseModal();
   };
@@ -1394,28 +1375,45 @@ body {
       if (pair.request) { req = parseHttpMessage(await pair.request.text(), true); }
       if (pair.response) { resp = parseHttpMessage(await pair.response.text(), false); }
       if (req) {
-        calls.push({ id, request: req, response: resp || { statusCode: 0, statusText: 'No Response', headers: {}, body: null } });
+        calls.push({ request: req, response: resp || { statusCode: 0, statusText: 'No Response', headers: {}, body: null } });
       }
     }
 
     if (calls.length === 0) { alert('Could not parse any API calls.'); return; }
 
     const platform = detectPlatformFromHeaders(calls[0].request.headers) || 'unknown';
+    const name = 'Drag & Drop Import';
 
-    const session = {
-      name: 'Drag & Drop Import',
-      importedAt: new Date().toISOString(),
-      platform: platform,
-      calls: calls
-    };
+    if (serverAvailable) {
+      // Save each call to the server
+      let slug = null;
+      for (const call of calls) {
+        try {
+          const resp = await fetch('/api/add-call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, platform, request: call.request, response: call.response })
+          });
+          if (resp.ok) {
+            const result = await resp.json();
+            slug = result.slug;
+          }
+        } catch (e) { console.error('Failed to save call:', e); }
+      }
 
-    adhocSessions.push(session);
-    const idx = adhocSessions.length - 1;
-    currentSession = { ...session, _adhoc: true, _adhocIndex: idx };
-    currentCallIndex = -1;
-    renderSidebar();
-    renderCallList(session.calls);
-    clearDetail();
+      if (slug) {
+        await loadSessions();
+        await selectSession(slug);
+      }
+    } else {
+      // Fallback: display in-memory only (GitHub Pages / file://)
+      const session = { name, importedAt: new Date().toISOString(), platform, calls, slug: 'drag-drop-import' };
+      calls.forEach((c, i) => c.id = String(i + 1));
+      currentSession = session;
+      currentCallIndex = -1;
+      renderCallList(session.calls);
+      clearDetail();
+    }
   }
 
   function parseHttpMessage(text, isRequest) {
@@ -1492,6 +1490,10 @@ body {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function slugify(name) {
+    return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
   init();

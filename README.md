@@ -26,11 +26,11 @@ python3 import_session.py add-response photo-projects-list 1 --body '{"status": 
 ### 2. View
 
 ```bash
-python3 -m http.server 8080
+python3 server.py
 # Open http://localhost:8080
 ```
 
-Or open `index.html` directly and use **+ cURL** button or drag & drop.
+`server.py` serves the viewer **and** saves changes you make in the browser (adding cURL calls, adding response bodies) directly to the `data/` JSON files on disk. Everything persists across restarts.
 
 ## Import Commands
 
@@ -100,14 +100,16 @@ pbpaste | python3 import_session.py add-response cart-checkout 1 --status 200
 
 ## Web Viewer Features
 
+All changes made in the browser are **saved to disk** when `server.py` is running.
+
 ### + cURL button
-Click **+ cURL** in the sidebar to paste a cURL command directly in the browser. Creates an in-memory session you can inspect immediately.
+Click **+ cURL** in the sidebar to paste a cURL command. It's saved to the session JSON on disk immediately.
 
 ### Add Response
-When viewing a call with no response, click **+ Add Response Body** in the response panel to paste the JSON response.
+When viewing a call with no response, click **+ Add Response Body** in the response panel to paste the JSON response. Saved to disk.
 
 ### Drag & Drop
-Drag a Proxyman `.folder` export onto the page for ad-hoc viewing.
+Drag a Proxyman `.folder` export onto the page. If `server.py` is running, all calls are saved to disk.
 
 ### Keyboard Shortcuts
 
@@ -117,7 +119,9 @@ Drag a Proxyman `.folder` export onto the page for ad-hoc viewing.
 | `↓` / `j` | Next API call |
 | `Esc` | Close modals |
 
-## GitHub Pages
+## GitHub Pages (read-only)
+
+GitHub Pages deploys a read-only viewer (no `server.py` = no saving). Use it for browsing already-imported data.
 
 1. Push this repo to GitHub
 2. Go to **Settings > Pages**
