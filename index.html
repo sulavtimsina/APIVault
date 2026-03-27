@@ -12,6 +12,7 @@
   --bg-panel: #1e1e3a;
   --bg-hover: #2a2a4a;
   --bg-selected: #0f3460;
+  --bg-input: #12122a;
   --text-primary: #e0e0e0;
   --text-secondary: #a0a0b8;
   --text-muted: #6a6a8a;
@@ -43,7 +44,6 @@ body {
   overflow: hidden;
 }
 
-/* Layout */
 .app { display: flex; height: 100vh; }
 
 /* Sidebar */
@@ -58,7 +58,7 @@ body {
 }
 
 .sidebar-header {
-  padding: 16px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border);
   font-size: 14px;
   font-weight: 600;
@@ -67,16 +67,32 @@ body {
   gap: 8px;
 }
 
-.sidebar-header .logo {
-  font-size: 18px;
-  color: var(--accent);
+.sidebar-header .logo { font-size: 18px; color: var(--accent); }
+
+.sidebar-actions {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 6px;
 }
 
-.sidebar-list {
+.action-btn {
   flex: 1;
-  overflow-y: auto;
-  padding: 8px 0;
+  padding: 6px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.15s, color 0.15s;
 }
+
+.action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.sidebar-list { flex: 1; overflow-y: auto; padding: 8px 0; }
 
 .sidebar-item {
   padding: 10px 16px;
@@ -128,7 +144,6 @@ body {
   min-width: 0;
 }
 
-/* Banner */
 .banner {
   background: var(--bg-tertiary);
   padding: 10px 16px;
@@ -191,7 +206,6 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Method colors */
 .method-get { color: var(--blue); }
 .method-post { color: var(--green); }
 .method-put { color: var(--yellow); }
@@ -200,11 +214,11 @@ body {
 .method-options { color: var(--text-muted); }
 .method-head { color: var(--text-muted); }
 
-/* Status colors */
 .status-2xx { color: var(--green); }
 .status-3xx { color: var(--yellow); }
 .status-4xx { color: var(--orange); }
 .status-5xx { color: var(--red); }
+.status-pending { color: var(--text-muted); font-style: italic; }
 
 /* Detail panel */
 .detail-panel {
@@ -252,9 +266,7 @@ body {
   text-overflow: ellipsis;
 }
 
-.section {
-  margin: 0 16px 12px;
-}
+.section { margin: 0 16px 12px; }
 
 .section-toggle {
   display: flex;
@@ -279,11 +291,7 @@ body {
 
 .section-toggle .arrow.collapsed { transform: rotate(-90deg); }
 
-.section-content {
-  overflow: hidden;
-  transition: max-height 0.2s ease;
-}
-
+.section-content { overflow: hidden; transition: max-height 0.2s ease; }
 .section-content.collapsed { max-height: 0 !important; overflow: hidden; }
 
 .headers-table {
@@ -301,17 +309,8 @@ body {
   border-bottom: 1px solid rgba(42, 42, 74, 0.3);
 }
 
-.headers-table .hdr-name {
-  color: var(--accent);
-  white-space: nowrap;
-  width: 1%;
-  padding-right: 16px;
-}
-
-.headers-table .hdr-value {
-  color: var(--text-secondary);
-  word-break: break-all;
-}
+.headers-table .hdr-name { color: var(--accent); white-space: nowrap; width: 1%; padding-right: 16px; }
+.headers-table .hdr-value { color: var(--text-secondary); word-break: break-all; }
 
 .body-content {
   font-family: var(--font-mono);
@@ -343,7 +342,6 @@ body {
 
 .copy-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
-/* JSON highlighting */
 .json-key { color: var(--json-key); }
 .json-string { color: var(--json-string); }
 .json-number { color: var(--json-number); }
@@ -351,9 +349,9 @@ body {
 .json-null { color: var(--json-null); font-style: italic; }
 .json-brace { color: var(--text-muted); }
 
-/* Empty / placeholder states */
 .empty-state {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100%;
@@ -362,6 +360,30 @@ body {
   text-align: center;
   padding: 40px;
   line-height: 1.8;
+  gap: 12px;
+}
+
+/* Add response placeholder */
+.add-response-prompt {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.add-response-btn {
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px dashed var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.add-response-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent);
 }
 
 /* Drop zone */
@@ -393,7 +415,145 @@ body {
 
 .resize-handle:hover { background: var(--accent); }
 
-/* Scrollbar styling */
+/* Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-backdrop.visible { display: flex; }
+
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.modal-close:hover { color: var(--text-primary); }
+
+.modal-body {
+  padding: 16px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.form-group { margin-bottom: 14px; }
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-input, .form-select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group { flex: 1; }
+
+.btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+.btn-primary:hover { background: #4a9dd0; }
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.form-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -406,6 +566,9 @@ body {
   <aside class="sidebar">
     <div class="sidebar-header">
       <span class="logo">&#9670;</span> APIVault
+    </div>
+    <div class="sidebar-actions">
+      <button class="action-btn" onclick="window._showCurlModal()" title="Import a cURL command">+ cURL</button>
     </div>
     <div class="sidebar-list" id="sidebarList"></div>
   </aside>
@@ -421,7 +584,9 @@ body {
         <div class="col-status">Status</div>
       </div>
       <div class="call-list" id="callList">
-        <div class="empty-state">Select a session from the sidebar<br>or drag &amp; drop Proxyman files here</div>
+        <div class="empty-state">
+          Select a session from the sidebar<br>or drag &amp; drop Proxyman files here
+        </div>
       </div>
     </div>
 
@@ -440,23 +605,93 @@ body {
 
 <div class="drop-overlay" id="dropOverlay">Drop Proxyman files or folder here</div>
 
+<!-- cURL Import Modal -->
+<div class="modal-backdrop" id="curlModal">
+  <div class="modal">
+    <div class="modal-header">
+      Paste cURL
+      <button class="modal-close" onclick="window._closeCurlModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Session / Screen Name</label>
+        <div class="form-row">
+          <div class="form-group" style="flex:2;margin-bottom:0">
+            <select class="form-select" id="curlSessionSelect">
+              <option value="__new__">+ New Session...</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:3;margin-bottom:0">
+            <input class="form-input" id="curlNewSessionName" placeholder="e.g. Cart Checkout">
+          </div>
+        </div>
+      </div>
+      <div class="form-group" id="curlPlatformGroup">
+        <label class="form-label">Platform</label>
+        <select class="form-select" id="curlPlatform" style="width:auto">
+          <option value="">Auto-detect</option>
+          <option value="ios">iOS</option>
+          <option value="android">Android</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">cURL Command</label>
+        <textarea class="form-textarea" id="curlInput" placeholder="curl -X POST 'https://api.example.com/v1/resource' \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer ...' \
+  -d '{&quot;key&quot;: &quot;value&quot;}'"></textarea>
+        <div class="form-hint">Paste from Chrome DevTools (Copy as cURL) or Proxyman</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="window._closeCurlModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window._importCurl()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Response Modal -->
+<div class="modal-backdrop" id="responseModal">
+  <div class="modal">
+    <div class="modal-header">
+      Add Response
+      <button class="modal-close" onclick="window._closeResponseModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Status Code</label>
+        <input class="form-input" id="responseStatus" type="number" value="200" style="width:120px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Response Body (JSON)</label>
+        <textarea class="form-textarea" id="responseBody" placeholder='{"statusCode": "0000", "data": { ... }}'></textarea>
+        <div class="form-hint">Paste the JSON response body</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="window._closeResponseModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window._saveResponse()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   'use strict';
 
-  // --- State ---
   let sessions = [];
   let currentSession = null;
   let currentCallIndex = -1;
-  let adhocSession = null;
+  let adhocSessions = [];
 
-  // --- Initialization ---
+  // --- Init ---
   async function init() {
     detectFileProtocol();
     await loadSessions();
     setupKeyboardNav();
     setupDragDrop();
     setupResize();
+    setupCurlSessionSelect();
   }
 
   function detectFileProtocol() {
@@ -466,7 +701,7 @@ body {
       banner.innerHTML = 'Opened via <code>file://</code> — fetch() won\'t work. ' +
         'Run <code>python3 -m http.server 8080</code> and open ' +
         '<a href="http://localhost:8080">http://localhost:8080</a>, ' +
-        'or drag &amp; drop Proxyman files directly onto this page.';
+        'or use the <b>+ cURL</b> button or drag &amp; drop to add API calls.';
     }
   }
 
@@ -477,9 +712,7 @@ body {
       const data = await resp.json();
       sessions = data.sessions || [];
       renderSidebar();
-    } catch (e) {
-      // file:// or no sessions yet — that's fine
-    }
+    } catch (e) {}
   }
 
   // --- Sidebar ---
@@ -487,19 +720,19 @@ body {
     const list = document.getElementById('sidebarList');
     list.innerHTML = '';
 
-    // Render persisted sessions
-    sessions.forEach((s, i) => {
-      const item = createSidebarItem(s.name, s.platform, s.callCount, () => selectSession(s.slug, i));
-      if (currentSession && currentSession.slug === s.slug) item.classList.add('active');
+    sessions.forEach((s) => {
+      const item = createSidebarItem(s.name, s.platform, s.callCount, () => selectSession(s.slug));
+      if (currentSession && !currentSession._adhoc && currentSession.slug === s.slug) item.classList.add('active');
       list.appendChild(item);
     });
 
-    // Render adhoc session if present
-    if (adhocSession) {
-      const item = createSidebarItem(adhocSession.name, 'adhoc', adhocSession.calls.length, () => selectAdhocSession());
-      if (currentSession && currentSession._adhoc) item.classList.add('active');
+    adhocSessions.forEach((s, i) => {
+      const item = createSidebarItem(s.name, 'adhoc', s.calls.length, () => selectAdhoc(i));
+      if (currentSession && currentSession._adhocIndex === i) item.classList.add('active');
       list.appendChild(item);
-    }
+    });
+
+    updateCurlSessionSelect();
   }
 
   function createSidebarItem(name, platform, count, onClick) {
@@ -522,7 +755,7 @@ body {
     return item;
   }
 
-  async function selectSession(slug, index) {
+  async function selectSession(slug) {
     try {
       const resp = await fetch(`data/${slug}/session.json`);
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -538,12 +771,13 @@ body {
     }
   }
 
-  function selectAdhocSession() {
-    if (!adhocSession) return;
-    currentSession = { ...adhocSession, _adhoc: true };
+  function selectAdhoc(index) {
+    const s = adhocSessions[index];
+    if (!s) return;
+    currentSession = { ...s, _adhoc: true, _adhocIndex: index };
     currentCallIndex = -1;
     renderSidebar();
-    renderCallList(adhocSession.calls);
+    renderCallList(s.calls);
     clearDetail();
   }
 
@@ -566,24 +800,27 @@ body {
       const method = call.request.method.toUpperCase();
       const methodClass = 'method-' + method.toLowerCase();
       const statusCode = call.response ? call.response.statusCode : 0;
-      const statusClass = statusCode >= 500 ? 'status-5xx'
+      const isPending = !statusCode || (call.response && call.response.statusText === 'Pending');
+      const statusClass = isPending ? 'status-pending'
+        : statusCode >= 500 ? 'status-5xx'
         : statusCode >= 400 ? 'status-4xx'
         : statusCode >= 300 ? 'status-3xx'
         : statusCode >= 200 ? 'status-2xx'
         : '';
 
-      // Extract path from URL
       let urlPath = call.request.url;
       try {
         const u = new URL(call.request.url);
         urlPath = u.pathname + u.search;
-      } catch (e) { /* keep full url */ }
+      } catch (e) {}
+
+      const statusDisplay = isPending ? '...' : (statusCode || '\u2014');
 
       row.innerHTML = `
         <div class="col-id">${escapeHtml(call.id)}</div>
         <div class="col-method ${methodClass}">${method}</div>
         <div class="col-url" title="${escapeHtml(call.request.url)}">${escapeHtml(urlPath)}</div>
-        <div class="col-status ${statusClass}">${statusCode || '—'}</div>
+        <div class="col-status ${statusClass}">${statusDisplay}</div>
       `;
       list.appendChild(row);
     });
@@ -596,12 +833,10 @@ body {
     currentCallIndex = index;
     const call = calls[index];
 
-    // Highlight active row
     document.querySelectorAll('.call-row').forEach((r, i) => {
       r.classList.toggle('active', i === index);
     });
 
-    // Scroll active row into view
     const activeRow = document.querySelector('.call-row.active');
     if (activeRow) activeRow.scrollIntoView({ block: 'nearest' });
 
@@ -631,19 +866,35 @@ body {
 
     // Response
     const sc = call.response ? call.response.statusCode : 0;
-    const statusClass = sc >= 500 ? 'status-5xx' : sc >= 400 ? 'status-4xx' : sc >= 300 ? 'status-3xx' : sc >= 200 ? 'status-2xx' : '';
-    const statusText = call.response ? call.response.statusText : '';
-    let respHtml = `<div class="detail-label">
-      <span>Response</span>
-      <span class="${statusClass}" style="font-family:var(--font-mono);font-size:12px;text-transform:none;letter-spacing:0">${sc} ${escapeHtml(statusText)}</span>
-    </div>`;
-    if (call.response) {
-      respHtml += renderSection('Headers', renderHeadersTable(call.response.headers), true);
-      respHtml += renderSection('Body', renderBody(call.response.body), false);
-    }
-    respPanel.innerHTML = respHtml;
+    const isPending = !sc || (call.response && call.response.statusText === 'Pending');
+    const hasBody = call.response && call.response.body !== null && call.response.body !== undefined;
 
-    // Wire up toggles
+    if (isPending || (!hasBody && sc === 0)) {
+      // No response yet — show add response prompt
+      const statusClass = sc >= 500 ? 'status-5xx' : sc >= 400 ? 'status-4xx' : sc >= 300 ? 'status-3xx' : sc >= 200 ? 'status-2xx' : '';
+      let respHtml = `<div class="detail-label">
+        <span>Response</span>
+        <span class="${statusClass}" style="font-family:var(--font-mono);font-size:12px;text-transform:none;letter-spacing:0">${isPending ? 'Pending' : (sc || '')}</span>
+      </div>`;
+      respHtml += `<div class="add-response-prompt">
+        <div style="color:var(--text-muted);font-size:13px;margin-bottom:12px">No response yet</div>
+        <button class="add-response-btn" onclick="window._showResponseModal()">+ Add Response Body</button>
+      </div>`;
+      respPanel.innerHTML = respHtml;
+    } else {
+      const statusClass = sc >= 500 ? 'status-5xx' : sc >= 400 ? 'status-4xx' : sc >= 300 ? 'status-3xx' : sc >= 200 ? 'status-2xx' : '';
+      const statusText = call.response ? call.response.statusText : '';
+      let respHtml = `<div class="detail-label">
+        <span>Response</span>
+        <span class="${statusClass}" style="font-family:var(--font-mono);font-size:12px;text-transform:none;letter-spacing:0">${sc} ${escapeHtml(statusText)}</span>
+      </div>`;
+      if (call.response) {
+        respHtml += renderSection('Headers', renderHeadersTable(call.response.headers), true);
+        respHtml += renderSection('Body', renderBody(call.response.body), false);
+      }
+      respPanel.innerHTML = respHtml;
+    }
+
     wireToggles(reqPanel);
     wireToggles(respPanel);
   }
@@ -696,8 +947,7 @@ body {
     }
 
     const isJson = typeof body === 'object';
-    const raw = isJson ? JSON.stringify(body, null, 2) : String(body);
-    const highlighted = isJson ? highlightJson(body) : escapeHtml(raw);
+    const highlighted = isJson ? highlightJsonRobust(body, 0) : escapeHtml(String(body));
     const copyId = 'copy-' + Math.random().toString(36).slice(2, 8);
 
     return `
@@ -708,57 +958,17 @@ body {
     `;
   }
 
-  // Global copy handler
   window._copyBody = function(id) {
     const el = document.getElementById(id);
     if (!el) return;
     const text = el.textContent.replace(/^Copy\s*/, '');
     navigator.clipboard.writeText(text).then(() => {
       const btn = el.querySelector('.copy-btn');
-      if (btn) {
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.textContent = 'Copy', 1500);
-      }
+      if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500); }
     });
   };
 
-  // --- JSON syntax highlighting ---
-  function highlightJson(obj) {
-    const json = JSON.stringify(obj, null, 2);
-    return syntaxHighlight(json);
-  }
-
-  function syntaxHighlight(json) {
-    // Escape HTML first, then apply highlighting via regex
-    const escaped = escapeHtml(json);
-    return escaped.replace(
-      /("(?:\\.|[^"\\])*")\s*:/g,
-      '<span class="json-key">$1</span>:'
-    ).replace(
-      /:\s*("(?:\\.|[^"\\])*")/g,
-      (match, p1) => ': <span class="json-string">' + p1 + '</span>'
-    ).replace(
-      /:\s*(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g,
-      ': <span class="json-number">$1</span>'
-    ).replace(
-      /:\s*(true|false)/g,
-      ': <span class="json-bool">$1</span>'
-    ).replace(
-      /:\s*(null)/g,
-      ': <span class="json-null">$1</span>'
-    ).replace(
-      // Highlight values in arrays (not after colon)
-      /\[\s*/g, '<span class="json-brace">[</span> '
-    ).replace(
-      /\s*\]/g, ' <span class="json-brace">]</span>'
-    ).replace(
-      /(?<!=["\\])\{/g, '<span class="json-brace">{</span>'
-    ).replace(
-      /\}(?!["\\])/g, '<span class="json-brace">}</span>'
-    );
-  }
-
-  // A more robust approach: highlight at token level
+  // --- JSON highlighting ---
   function highlightJsonRobust(obj, indent) {
     indent = indent || 0;
     const pad = '  '.repeat(indent);
@@ -788,26 +998,312 @@ body {
     return escapeHtml(String(obj));
   }
 
-  // Override with robust version
-  function highlightJson(obj) {
-    return highlightJsonRobust(obj, 0);
+  // --- cURL parser ---
+  function parseCurl(curlStr) {
+    // Normalize line continuations
+    curlStr = curlStr.replace(/\\\r?\n/g, ' ');
+
+    const tokens = shellSplit(curlStr);
+    // Remove 'curl' if first
+    if (tokens.length > 0 && tokens[0] === 'curl') tokens.shift();
+
+    let method = 'GET';
+    let url = '';
+    const headers = {};
+    let body = null;
+
+    let i = 0;
+    while (i < tokens.length) {
+      const tok = tokens[i];
+
+      if (tok === '-X' || tok === '--request') {
+        i++; if (i < tokens.length) method = tokens[i].toUpperCase();
+      } else if (tok === '-H' || tok === '--header') {
+        i++;
+        if (i < tokens.length) {
+          const hdr = tokens[i];
+          const colon = hdr.indexOf(':');
+          if (colon !== -1) {
+            const key = hdr.substring(0, colon).trim();
+            const val = hdr.substring(colon + 1).trim();
+            if (headers[key] !== undefined) {
+              if (Array.isArray(headers[key])) headers[key].push(val);
+              else headers[key] = [headers[key], val];
+            } else {
+              headers[key] = val;
+            }
+          }
+        }
+      } else if (tok === '-d' || tok === '--data' || tok === '--data-raw' || tok === '--data-binary' || tok === '--data-ascii') {
+        i++;
+        if (i < tokens.length) {
+          const bodyStr = tokens[i];
+          try { body = JSON.parse(bodyStr); }
+          catch (e) { body = bodyStr; }
+          if (method === 'GET') method = 'POST';
+        }
+      } else if (['--compressed', '-s', '--silent', '-S', '--show-error', '-k', '--insecure',
+                   '-L', '--location', '-v', '--verbose', '-i', '--include'].includes(tok)) {
+        // Skip no-arg flags
+      } else if (tok.startsWith('-')) {
+        // Unknown flag — skip possible arg
+        if (i + 1 < tokens.length && !tokens[i + 1].startsWith('-')) i++;
+      } else {
+        if (!url) url = tok;
+      }
+      i++;
+    }
+
+    return { method, url, headers, body };
   }
+
+  // Simple shell-like tokenizer (handles single/double quotes)
+  function shellSplit(str) {
+    const tokens = [];
+    let current = '';
+    let inSingle = false;
+    let inDouble = false;
+    let escape = false;
+
+    for (let i = 0; i < str.length; i++) {
+      const ch = str[i];
+
+      if (escape) {
+        current += ch;
+        escape = false;
+        continue;
+      }
+
+      if (ch === '\\' && !inSingle) {
+        escape = true;
+        continue;
+      }
+
+      if (ch === "'" && !inDouble) {
+        inSingle = !inSingle;
+        continue;
+      }
+
+      if (ch === '"' && !inSingle) {
+        inDouble = !inDouble;
+        continue;
+      }
+
+      if ((ch === ' ' || ch === '\t') && !inSingle && !inDouble) {
+        if (current.length > 0) {
+          tokens.push(current);
+          current = '';
+        }
+        continue;
+      }
+
+      current += ch;
+    }
+
+    if (current.length > 0) tokens.push(current);
+    return tokens;
+  }
+
+  // --- cURL Modal ---
+  function setupCurlSessionSelect() {
+    const select = document.getElementById('curlSessionSelect');
+    const nameInput = document.getElementById('curlNewSessionName');
+    const platformGroup = document.getElementById('curlPlatformGroup');
+
+    select.addEventListener('change', () => {
+      const isNew = select.value === '__new__';
+      nameInput.style.display = isNew ? '' : 'none';
+      platformGroup.style.display = isNew ? '' : 'none';
+    });
+  }
+
+  function updateCurlSessionSelect() {
+    const select = document.getElementById('curlSessionSelect');
+    const currentVal = select.value;
+    select.innerHTML = '<option value="__new__">+ New Session...</option>';
+
+    sessions.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = 'saved:' + s.slug;
+      opt.textContent = s.name + ' (' + s.platform + ')';
+      select.appendChild(opt);
+    });
+
+    adhocSessions.forEach((s, i) => {
+      const opt = document.createElement('option');
+      opt.value = 'adhoc:' + i;
+      opt.textContent = s.name + ' (in-memory)';
+      select.appendChild(opt);
+    });
+
+    // Restore selection
+    if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
+      select.value = currentVal;
+    }
+    select.dispatchEvent(new Event('change'));
+  }
+
+  window._showCurlModal = function() {
+    document.getElementById('curlInput').value = '';
+    document.getElementById('curlNewSessionName').value = '';
+    document.getElementById('curlModal').classList.add('visible');
+    updateCurlSessionSelect();
+    setTimeout(() => document.getElementById('curlInput').focus(), 100);
+  };
+
+  window._closeCurlModal = function() {
+    document.getElementById('curlModal').classList.remove('visible');
+  };
+
+  window._importCurl = function() {
+    const curlStr = document.getElementById('curlInput').value.trim();
+    if (!curlStr) { alert('Please paste a cURL command.'); return; }
+
+    const req = parseCurl(curlStr);
+    if (!req.url) { alert('Could not find a URL in the cURL command.'); return; }
+
+    const selectVal = document.getElementById('curlSessionSelect').value;
+
+    let targetSession;
+    let isAdhoc = true;
+
+    if (selectVal === '__new__') {
+      const name = document.getElementById('curlNewSessionName').value.trim() || 'Untitled Session';
+      const platform = document.getElementById('curlPlatform').value || detectPlatformFromHeaders(req.headers) || 'unknown';
+      targetSession = {
+        name: name,
+        importedAt: new Date().toISOString(),
+        platform: platform,
+        calls: []
+      };
+      adhocSessions.push(targetSession);
+    } else if (selectVal.startsWith('adhoc:')) {
+      const idx = parseInt(selectVal.split(':')[1]);
+      targetSession = adhocSessions[idx];
+    } else if (selectVal.startsWith('saved:')) {
+      // Can't modify saved sessions from browser — create adhoc copy or add to adhoc
+      alert('To add calls to a saved session, use the CLI:\n\npython3 import_session.py curl "' + selectVal.split(':')[1] + '"');
+      return;
+    }
+
+    if (!targetSession) return;
+
+    // Generate call ID
+    let maxId = 0;
+    targetSession.calls.forEach(c => { const n = parseInt(c.id); if (n > maxId) maxId = n; });
+
+    const call = {
+      id: String(maxId + 1),
+      request: req,
+      response: { statusCode: 0, statusText: 'Pending', headers: {}, body: null }
+    };
+
+    targetSession.calls.push(call);
+
+    // Select this session
+    const adhocIdx = adhocSessions.indexOf(targetSession);
+    currentSession = { ...targetSession, _adhoc: true, _adhocIndex: adhocIdx };
+    currentCallIndex = targetSession.calls.length - 1;
+
+    renderSidebar();
+    renderCallList(targetSession.calls);
+    selectCall(currentCallIndex);
+
+    window._closeCurlModal();
+  };
+
+  function detectPlatformFromHeaders(headers) {
+    for (const [k, v] of Object.entries(headers)) {
+      const val = (Array.isArray(v) ? v[0] : v).toLowerCase();
+      if (k.toLowerCase() === 'x-chplat' && (val === 'ios' || val === 'android')) return val;
+      if (k.toLowerCase() === 'x-device-type') {
+        if (val.includes('ios')) return 'ios';
+        if (val.includes('android')) return 'android';
+      }
+    }
+    return null;
+  }
+
+  // --- Add Response Modal ---
+  window._showResponseModal = function() {
+    document.getElementById('responseStatus').value = '200';
+    document.getElementById('responseBody').value = '';
+    document.getElementById('responseModal').classList.add('visible');
+    setTimeout(() => document.getElementById('responseBody').focus(), 100);
+  };
+
+  window._closeResponseModal = function() {
+    document.getElementById('responseModal').classList.remove('visible');
+  };
+
+  window._saveResponse = function() {
+    if (!currentSession || currentCallIndex < 0) return;
+
+    const statusCode = parseInt(document.getElementById('responseStatus').value) || 200;
+    const bodyStr = document.getElementById('responseBody').value.trim();
+
+    let body = null;
+    if (bodyStr) {
+      try { body = JSON.parse(bodyStr); }
+      catch (e) { body = bodyStr; }
+    }
+
+    const statusTexts = {200:'OK',201:'Created',204:'No Content',400:'Bad Request',
+      401:'Unauthorized',403:'Forbidden',404:'Not Found',500:'Internal Server Error'};
+
+    const call = currentSession.calls[currentCallIndex];
+    call.response = {
+      statusCode: statusCode,
+      statusText: statusTexts[statusCode] || '',
+      headers: (call.response && call.response.headers) || {},
+      body: body
+    };
+
+    // Also update in adhocSessions if it's an adhoc session
+    if (currentSession._adhoc && currentSession._adhocIndex !== undefined) {
+      const adhoc = adhocSessions[currentSession._adhocIndex];
+      if (adhoc && adhoc.calls[currentCallIndex]) {
+        adhoc.calls[currentCallIndex].response = call.response;
+      }
+    }
+
+    renderCallList(currentSession.calls);
+    selectCall(currentCallIndex);
+    renderSidebar();
+
+    window._closeResponseModal();
+  };
 
   // --- Keyboard navigation ---
   function setupKeyboardNav() {
     document.addEventListener('keydown', (e) => {
+      // Don't capture when typing in inputs/textareas
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
       if (!currentSession) return;
       const calls = currentSession.calls;
       if (!calls || calls.length === 0) return;
 
+      if (e.key === 'Escape') {
+        window._closeCurlModal();
+        window._closeResponseModal();
+        return;
+      }
+
       if (e.key === 'ArrowDown' || e.key === 'j') {
         e.preventDefault();
-        const next = Math.min(currentCallIndex + 1, calls.length - 1);
-        selectCall(next);
+        selectCall(Math.min(currentCallIndex + 1, calls.length - 1));
       } else if (e.key === 'ArrowUp' || e.key === 'k') {
         e.preventDefault();
-        const prev = Math.max(currentCallIndex - 1, 0);
-        selectCall(prev);
+        selectCall(Math.max(currentCallIndex - 1, 0));
+      }
+    });
+
+    // Also handle Escape in modals
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        window._closeCurlModal();
+        window._closeResponseModal();
       }
     });
   }
@@ -817,69 +1313,36 @@ body {
     const overlay = document.getElementById('dropOverlay');
     let dragCounter = 0;
 
-    document.addEventListener('dragenter', (e) => {
-      e.preventDefault();
-      dragCounter++;
-      overlay.classList.add('visible');
-    });
-
-    document.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      dragCounter--;
-      if (dragCounter <= 0) {
-        dragCounter = 0;
-        overlay.classList.remove('visible');
-      }
-    });
-
-    document.addEventListener('dragover', (e) => {
-      e.preventDefault();
-    });
-
+    document.addEventListener('dragenter', (e) => { e.preventDefault(); dragCounter++; overlay.classList.add('visible'); });
+    document.addEventListener('dragleave', (e) => { e.preventDefault(); dragCounter--; if (dragCounter <= 0) { dragCounter = 0; overlay.classList.remove('visible'); } });
+    document.addEventListener('dragover', (e) => { e.preventDefault(); });
     document.addEventListener('drop', async (e) => {
-      e.preventDefault();
-      dragCounter = 0;
-      overlay.classList.remove('visible');
-
+      e.preventDefault(); dragCounter = 0; overlay.classList.remove('visible');
       const files = await collectDroppedFiles(e.dataTransfer);
-      if (files.length > 0) {
-        parseDroppedFiles(files);
-      }
+      if (files.length > 0) parseDroppedFiles(files);
     });
   }
 
   async function collectDroppedFiles(dataTransfer) {
     const files = [];
     const items = dataTransfer.items;
-
     if (items) {
       const entries = [];
       for (let i = 0; i < items.length; i++) {
         const entry = items[i].webkitGetAsEntry ? items[i].webkitGetAsEntry() : null;
         if (entry) entries.push(entry);
       }
-
       for (const entry of entries) {
-        if (entry.isFile) {
-          const file = await getFile(entry);
-          if (file.name.endsWith('.txt')) files.push(file);
-        } else if (entry.isDirectory) {
-          const dirFiles = await readDirectory(entry);
-          files.push(...dirFiles.filter(f => f.name.endsWith('.txt')));
-        }
+        if (entry.isFile) { const file = await getFile(entry); if (file.name.endsWith('.txt')) files.push(file); }
+        else if (entry.isDirectory) { const dirFiles = await readDirectory(entry); files.push(...dirFiles.filter(f => f.name.endsWith('.txt'))); }
       }
     } else {
-      for (const file of dataTransfer.files) {
-        if (file.name.endsWith('.txt')) files.push(file);
-      }
+      for (const file of dataTransfer.files) { if (file.name.endsWith('.txt')) files.push(file); }
     }
-
     return files;
   }
 
-  function getFile(entry) {
-    return new Promise((resolve, reject) => entry.file(resolve, reject));
-  }
+  function getFile(entry) { return new Promise((resolve, reject) => entry.file(resolve, reject)); }
 
   function readDirectory(dirEntry) {
     return new Promise((resolve) => {
@@ -887,16 +1350,8 @@ body {
       const allFiles = [];
       function readBatch() {
         reader.readEntries(async (entries) => {
-          if (entries.length === 0) {
-            resolve(allFiles);
-            return;
-          }
-          for (const entry of entries) {
-            if (entry.isFile) {
-              const file = await getFile(entry);
-              allFiles.push(file);
-            }
-          }
+          if (entries.length === 0) { resolve(allFiles); return; }
+          for (const entry of entries) { if (entry.isFile) { const file = await getFile(entry); allFiles.push(file); } }
           readBatch();
         });
       }
@@ -905,10 +1360,8 @@ body {
   }
 
   async function parseDroppedFiles(files) {
-    // Pair files by [ID] Request/Response pattern
     const pattern = /^\[(\d+)\]\s+(Request|Response)\s+-\s+(.+)\.txt$/;
     const fileMap = {};
-
     for (const file of files) {
       const m = file.name.match(pattern);
       if (!m) continue;
@@ -918,74 +1371,40 @@ body {
     }
 
     const ids = Object.keys(fileMap).sort((a, b) => parseInt(a) - parseInt(b));
-    if (ids.length === 0) {
-      alert('No valid Proxyman request/response files found. Expected format: [ID] Request - *.txt');
-      return;
-    }
+    if (ids.length === 0) { alert('No valid Proxyman request/response files found.'); return; }
 
     const calls = [];
     for (const id of ids) {
       const pair = fileMap[id];
       let req = null, resp = null;
-
-      if (pair.request) {
-        const text = await pair.request.text();
-        req = parseHttpMessage(text, true);
-      }
-      if (pair.response) {
-        const text = await pair.response.text();
-        resp = parseHttpMessage(text, false);
-      }
-
+      if (pair.request) { req = parseHttpMessage(await pair.request.text(), true); }
+      if (pair.response) { resp = parseHttpMessage(await pair.response.text(), false); }
       if (req) {
-        calls.push({
-          id: id,
-          request: req,
-          response: resp || { statusCode: 0, statusText: 'No Response', headers: {}, body: null }
-        });
+        calls.push({ id, request: req, response: resp || { statusCode: 0, statusText: 'No Response', headers: {}, body: null } });
       }
     }
 
-    if (calls.length === 0) {
-      alert('Could not parse any API calls from the dropped files.');
-      return;
-    }
+    if (calls.length === 0) { alert('Could not parse any API calls.'); return; }
 
-    // Detect platform
-    let platform = 'unknown';
-    for (const call of calls) {
-      const hdrs = call.request.headers;
-      for (const [k, v] of Object.entries(hdrs)) {
-        if (k.toLowerCase() === 'x-chplat') {
-          platform = String(v).toLowerCase();
-          break;
-        }
-        if (k.toLowerCase() === 'x-device-type') {
-          const val = String(v).toLowerCase();
-          if (val.includes('ios')) { platform = 'ios'; break; }
-          if (val.includes('android')) { platform = 'android'; break; }
-        }
-      }
-      if (platform !== 'unknown') break;
-    }
+    const platform = detectPlatformFromHeaders(calls[0].request.headers) || 'unknown';
 
-    adhocSession = {
-      name: 'Ad-hoc Import',
+    const session = {
+      name: 'Drag & Drop Import',
       importedAt: new Date().toISOString(),
       platform: platform,
       calls: calls
     };
 
-    selectAdhocSession();
+    adhocSessions.push(session);
+    const idx = adhocSessions.length - 1;
+    currentSession = { ...session, _adhoc: true, _adhocIndex: idx };
+    currentCallIndex = -1;
     renderSidebar();
+    renderCallList(session.calls);
+    clearDetail();
   }
 
   function parseHttpMessage(text, isRequest) {
-    // Split on blank line
-    const splitIdx = text.search(/\r?\n\r?\n/);
-    const headerBlock = splitIdx >= 0 ? text.substring(0, splitIdx) : text;
-    const bodyRaw = splitIdx >= 0 ? text.substring(text.indexOf('\n\n', splitIdx - 1) + 2) : '';
-    // More accurate split
     const parts = text.split(/\r?\n\r?\n/);
     const hdrPart = parts[0];
     const bodyPart = parts.slice(1).join('\n\n').trim();
@@ -1010,10 +1429,7 @@ body {
     }
 
     let body = null;
-    if (bodyPart) {
-      try { body = JSON.parse(bodyPart); }
-      catch (e) { body = bodyPart; }
-    }
+    if (bodyPart) { try { body = JSON.parse(bodyPart); } catch (e) { body = bodyPart; } }
 
     if (isRequest) {
       const m = firstLine.match(/^(\S+)\s+(\S+)\s+HTTP\/[\d.]+/);
@@ -1023,17 +1439,14 @@ body {
       for (const [k, v] of Object.entries(headers)) {
         if (k.toLowerCase() === 'host') { host = Array.isArray(v) ? v[0] : v; break; }
       }
-      const url = host ? 'https://' + host + path : path;
-      return { method, url, headers, body };
+      return { method, url: host ? 'https://' + host + path : path, headers, body };
     } else {
       const m = firstLine.match(/^HTTP\/[\d.]+\s+(\d+)\s*(.*)/);
-      const statusCode = m ? parseInt(m[1]) : 0;
-      const statusText = m ? m[2].trim() : '';
-      return { statusCode, statusText, headers, body };
+      return { statusCode: m ? parseInt(m[1]) : 0, statusText: m ? m[2].trim() : '', headers, body };
     }
   }
 
-  // --- Resize handle ---
+  // --- Resize ---
   function setupResize() {
     const handle = document.getElementById('resizeHandle');
     const container = document.querySelector('.main');
@@ -1061,14 +1474,12 @@ body {
     }
   }
 
-  // --- Utilities ---
   function escapeHtml(str) {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
   }
 
-  // --- Start ---
   init();
 })();
 </script>
