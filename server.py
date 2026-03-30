@@ -2,6 +2,7 @@
 """APIVault local server — serves the viewer and persists changes to data/ JSON files."""
 
 import json
+import shutil
 import sys
 from datetime import datetime, timezone
 from http.server import HTTPServer, SimpleHTTPRequestHandler
@@ -41,6 +42,15 @@ def upsert_manifest(name: str, slug: str, platform: str, imported_at: str, call_
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
 
 
+def remove_from_manifest(slug: str):
+    manifest_path = DATA_DIR / "sessions.json"
+    if not manifest_path.exists():
+        return
+    manifest = json.loads(manifest_path.read_text())
+    manifest["sessions"] = [s for s in manifest["sessions"] if s["slug"] != slug]
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n")
+
+
 class APIVaultHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
@@ -48,6 +58,12 @@ class APIVaultHandler(SimpleHTTPRequestHandler):
             self._handle_add_call()
         elif self.path == "/api/update-response":
             self._handle_update_response()
+        elif self.path == "/api/create-session":
+            self._handle_create_session()
+        elif self.path == "/api/delete-session":
+            self._handle_delete_session()
+        elif self.path == "/api/update-call-label":
+            self._handle_update_call_label()
         else:
             self.send_error(404, "Not found")
 
@@ -64,6 +80,60 @@ class APIVaultHandler(SimpleHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _handle_create_session(self):
+        try:
+            payload = self._read_json_body()
+        except Exception:
+            self.send_error(400, "Invalid JSON")
+            return
+
+        name = payload.get("name", "").strip()
+        if not name:
+            self._send_json(400, {"error": "Missing session name"})
+            return
+
+        platform = payload.get("platform", "unknown")
+        slug = slugify(name)
+        session_dir = DATA_DIR / slug
+        session_dir.mkdir(parents=True, exist_ok=True)
+        session_path = session_dir / "session.json"
+
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        if session_path.exists():
+            self._send_json(409, {"error": f"Session '{name}' already exists", "slug": slug})
+            return
+
+        session = {"name": name, "importedAt": now, "platform": platform, "calls": []}
+        session_path.write_text(json.dumps(session, indent=2) + "\n")
+        upsert_manifest(name, slug, platform, now, 0)
+
+        self._send_json(200, {"ok": True, "slug": slug})
+        print(f"  Created session '{name}' ({slug})")
+
+    def _handle_delete_session(self):
+        try:
+            payload = self._read_json_body()
+        except Exception:
+            self.send_error(400, "Invalid JSON")
+            return
+
+        slug = payload.get("slug", "").strip()
+        if not slug:
+            self._send_json(400, {"error": "Missing slug"})
+            return
+
+        session_dir = DATA_DIR / slug
+        if not session_dir.exists():
+            self._send_json(404, {"error": f"Session '{slug}' not found"})
+            return
+
+        shutil.rmtree(session_dir)
+        remove_from_manifest(slug)
+
+        self._send_json(200, {"ok": True})
+        print(f"  Deleted session '{slug}'")
+
     def _handle_add_call(self):
         try:
             payload = self._read_json_body()
@@ -73,6 +143,7 @@ class APIVaultHandler(SimpleHTTPRequestHandler):
 
         name = payload.get("name", "Untitled")
         platform = payload.get("platform", "unknown")
+        label = payload.get("label", "")
         request = payload.get("request")
         if not request or not request.get("url"):
             self._send_json(400, {"error": "Missing request.url"})
@@ -101,6 +172,7 @@ class APIVaultHandler(SimpleHTTPRequestHandler):
 
         call = {
             "id": call_id,
+            "label": label,
             "request": request,
             "response": payload.get("response", {"statusCode": 0, "statusText": "Pending", "headers": {}, "body": None}),
         }
@@ -111,6 +183,42 @@ class APIVaultHandler(SimpleHTTPRequestHandler):
 
         self._send_json(200, {"ok": True, "slug": slug, "callId": call_id, "callCount": len(session["calls"])})
         print(f"  Added call #{call_id} to '{name}' ({slug})")
+
+    def _handle_update_call_label(self):
+        try:
+            payload = self._read_json_body()
+        except Exception:
+            self.send_error(400, "Invalid JSON")
+            return
+
+        slug = payload.get("slug", "").strip()
+        call_id = str(payload.get("callId", ""))
+        label = payload.get("label", "")
+
+        if not slug or not call_id:
+            self._send_json(400, {"error": "Missing slug or callId"})
+            return
+
+        session_path = DATA_DIR / slug / "session.json"
+        if not session_path.exists():
+            self._send_json(404, {"error": f"Session '{slug}' not found"})
+            return
+
+        session = json.loads(session_path.read_text())
+        call = None
+        for c in session.get("calls", []):
+            if str(c["id"]) == call_id:
+                call = c
+                break
+
+        if not call:
+            self._send_json(404, {"error": f"Call #{call_id} not found"})
+            return
+
+        call["label"] = label
+        session_path.write_text(json.dumps(session, indent=2) + "\n")
+        self._send_json(200, {"ok": True})
+        print(f"  Updated label for call #{call_id} in '{slug}' to '{label}'")
 
     def _handle_update_response(self):
         try:

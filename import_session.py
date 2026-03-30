@@ -187,7 +187,7 @@ def process_folder(folder: Path, name: str, platform: str | None, redact: bool) 
             if resp:
                 resp["headers"] = redact_headers(resp["headers"])
 
-        call = {"id": pair["id"], "request": req}
+        call = {"id": pair["id"], "label": "", "request": req}
         call["response"] = resp if resp else {"statusCode": 0, "statusText": "No Response", "headers": {}, "body": None}
         calls.append(call)
 
@@ -358,6 +358,9 @@ def cmd_folder(args):
 
     print(f"Scanning {folder}...")
     session = process_folder(folder, args.screen_name, args.platform, args.redact)
+    if args.label:
+        for call in session["calls"]:
+            call["label"] = args.label
     print(f"Found {len(session['calls'])} API call(s), platform: {session['platform']}")
 
     save_session(session_dir / "session.json", session)
@@ -411,6 +414,7 @@ def cmd_curl(args):
 
     call = {
         "id": call_id,
+        "label": args.label or "",
         "request": req,
         "response": {"statusCode": 0, "statusText": "Pending", "headers": {}, "body": None},
     }
@@ -490,6 +494,7 @@ def main():
     p_folder.add_argument("proxyman_folder", help="Path to the Proxyman .folder export directory")
     p_folder.add_argument("screen_name", help='Screen/flow name (e.g. "Photo Projects List")')
     p_folder.add_argument("--platform", choices=["ios", "android"], default=None)
+    p_folder.add_argument("--label", default=None, help="Screen/feature label for all imported calls")
     p_folder.add_argument("--redact", action="store_true", help="Redact sensitive headers")
     p_folder.add_argument("--data-dir", default=None)
 
@@ -497,6 +502,7 @@ def main():
     p_curl = subparsers.add_parser("curl", help="Import a cURL command as an API call")
     p_curl.add_argument("screen_name", help='Screen/flow name (e.g. "Photo Projects List")')
     p_curl.add_argument("-c", "--command", default=None, help="cURL command string (or omit to read from stdin)")
+    p_curl.add_argument("--label", default=None, help="Screen/feature label for the imported call")
     p_curl.add_argument("--platform", choices=["ios", "android"], default=None)
     p_curl.add_argument("--redact", action="store_true", help="Redact sensitive headers")
     p_curl.add_argument("--data-dir", default=None)

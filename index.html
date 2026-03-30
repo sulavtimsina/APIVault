@@ -99,10 +99,15 @@ body {
   cursor: pointer;
   border-left: 3px solid transparent;
   transition: background 0.15s;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .sidebar-item:hover { background: var(--bg-hover); }
 .sidebar-item.active { background: var(--bg-selected); border-left-color: var(--accent); }
+
+.sidebar-item-content { flex: 1; min-width: 0; }
 
 .sidebar-item .name {
   font-size: 13px;
@@ -121,6 +126,23 @@ body {
   align-items: center;
 }
 
+.sidebar-delete-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.sidebar-item:hover .sidebar-delete-btn { opacity: 1; }
+.sidebar-delete-btn:hover { color: var(--red); background: rgba(231, 76, 60, 0.15); }
+
 .badge {
   font-size: 10px;
   font-weight: 600;
@@ -132,8 +154,10 @@ body {
 
 .badge-ios { background: #2a4a6a; color: #5dade2; }
 .badge-android { background: #2a5a2a; color: #2ecc71; }
+.badge-web { background: #4a3a2a; color: #e67e22; }
 .badge-unknown { background: #3a3a3a; color: #a0a0a0; }
 .badge-adhoc { background: #4a2a4a; color: #c39bd3; }
+.badge-other { background: #3a3a3a; color: #a0a0a0; }
 
 /* Main area */
 .main {
@@ -153,6 +177,42 @@ body {
 }
 
 .banner a { color: var(--accent); }
+
+/* Call toolbar */
+.call-toolbar {
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  display: none;
+  gap: 8px;
+  align-items: center;
+}
+
+.call-toolbar.visible { display: flex; }
+
+.call-toolbar-title {
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toolbar-btn {
+  padding: 5px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+
+.toolbar-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
 
 /* Call list */
 .call-list-container {
@@ -177,8 +237,9 @@ body {
 }
 
 .call-list-header > div { padding: 8px 12px; }
-.col-id { width: 60px; min-width: 60px; }
+.col-id { width: 50px; min-width: 50px; }
 .col-method { width: 70px; min-width: 70px; }
+.col-label { width: 160px; min-width: 100px; }
 .col-url { flex: 1; min-width: 0; }
 .col-status { width: 70px; min-width: 70px; text-align: center; }
 
@@ -205,6 +266,14 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.call-label-cell {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.call-label-cell.empty { color: var(--text-muted); }
 
 .method-get { color: var(--blue); }
 .method-post { color: var(--green); }
@@ -264,6 +333,46 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.detail-call-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 16px 8px;
+  font-size: 12px;
+}
+
+.detail-call-label .label-tag {
+  background: var(--bg-tertiary);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.detail-call-label .label-edit-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.detail-call-label .label-edit-btn:hover { color: var(--text-primary); }
+
+.detail-label-input {
+  background: var(--bg-input);
+  border: 1px solid var(--accent);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: var(--font-sans);
+  padding: 2px 8px;
+  border-radius: 3px;
+  outline: none;
+  width: 200px;
 }
 
 .section { margin: 0 16px 12px; }
@@ -548,6 +657,14 @@ body {
 
 .btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
 
+.btn-danger {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+.btn-danger:hover { background: #c0392b; }
+
 .form-hint {
   font-size: 11px;
   color: var(--text-muted);
@@ -568,7 +685,7 @@ body {
       <span class="logo">&#9670;</span> APIVault
     </div>
     <div class="sidebar-actions">
-      <button class="action-btn" onclick="window._showCurlModal()" title="Import a cURL command">+ cURL</button>
+      <button class="action-btn" onclick="window._showCreateSessionModal()">+ New Session</button>
     </div>
     <div class="sidebar-list" id="sidebarList"></div>
   </aside>
@@ -576,16 +693,24 @@ body {
   <main class="main">
     <div class="banner" id="banner"></div>
 
+    <div class="call-toolbar" id="callToolbar">
+      <span class="call-toolbar-title" id="callToolbarTitle"></span>
+      <button class="toolbar-btn" onclick="window._showCurlModal()">+ Paste cURL</button>
+      <button class="toolbar-btn" onclick="window._triggerFileImport()">+ Import Files</button>
+      <input type="file" id="fileImportInput" multiple accept=".txt" style="display:none" onchange="window._handleFileImport(this.files)">
+    </div>
+
     <div class="call-list-container" id="callListContainer">
       <div class="call-list-header">
         <div class="col-id">ID</div>
         <div class="col-method">Method</div>
+        <div class="col-label">Label</div>
         <div class="col-url">URL</div>
         <div class="col-status">Status</div>
       </div>
       <div class="call-list" id="callList">
         <div class="empty-state">
-          Select a session from the sidebar<br>or drag &amp; drop Proxyman files here
+          Select a session from the sidebar<br>or create a new one with "+ New Session"
         </div>
       </div>
     </div>
@@ -605,7 +730,36 @@ body {
 
 <div class="drop-overlay" id="dropOverlay">Drop Proxyman files or folder here</div>
 
-<!-- cURL Import Modal -->
+<!-- Create Session Modal -->
+<div class="modal-backdrop" id="createSessionModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      New Session
+      <button class="modal-close" onclick="window._closeCreateSessionModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Session Name</label>
+        <input class="form-input" id="createSessionName" placeholder="e.g. Sprint 42 API Capture">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Platform</label>
+        <select class="form-select" id="createSessionPlatform" style="width:auto">
+          <option value="ios">iOS</option>
+          <option value="android">Android</option>
+          <option value="web">Web</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="window._closeCreateSessionModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="window._createSession()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- cURL Import Modal (simplified — no session picker) -->
 <div class="modal-backdrop" id="curlModal">
   <div class="modal">
     <div class="modal-header">
@@ -614,33 +768,17 @@ body {
     </div>
     <div class="modal-body">
       <div class="form-group">
-        <label class="form-label">Session / Screen Name</label>
-        <div class="form-row">
-          <div class="form-group" style="flex:2;margin-bottom:0">
-            <select class="form-select" id="curlSessionSelect">
-              <option value="__new__">+ New Session...</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex:3;margin-bottom:0">
-            <input class="form-input" id="curlNewSessionName" placeholder="e.g. Cart Checkout">
-          </div>
-        </div>
-      </div>
-      <div class="form-group" id="curlPlatformGroup">
-        <label class="form-label">Platform</label>
-        <select class="form-select" id="curlPlatform" style="width:auto">
-          <option value="">Auto-detect</option>
-          <option value="ios">iOS</option>
-          <option value="android">Android</option>
-        </select>
-      </div>
-      <div class="form-group">
         <label class="form-label">cURL Command</label>
         <textarea class="form-textarea" id="curlInput" placeholder="curl -X POST 'https://api.example.com/v1/resource' \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer ...' \
   -d '{&quot;key&quot;: &quot;value&quot;}'"></textarea>
         <div class="form-hint">Paste from Chrome DevTools (Copy as cURL) or Proxyman</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Screen / Feature Label</label>
+        <input class="form-input" id="curlLabel" placeholder="e.g. Photo Projects List, Cart Page">
+        <div class="form-hint">Optional — helps identify which screen triggered this call</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -675,6 +813,26 @@ body {
   </div>
 </div>
 
+<!-- Delete Session Confirmation Modal -->
+<div class="modal-backdrop" id="deleteSessionModal">
+  <div class="modal" style="width:400px">
+    <div class="modal-header">
+      Delete Session
+      <button class="modal-close" onclick="window._closeDeleteSessionModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);line-height:1.6">
+        Are you sure you want to delete <strong id="deleteSessionName" style="color:var(--text-primary)"></strong>?
+        This will permanently remove all API calls in this session.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="window._closeDeleteSessionModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="window._confirmDeleteSession()">Delete</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   'use strict';
@@ -683,6 +841,7 @@ body {
   let currentSession = null;
   let currentCallIndex = -1;
   let serverAvailable = false;
+  let pendingDeleteSlug = null;
 
   // --- Init ---
   async function init() {
@@ -692,14 +851,11 @@ body {
     setupKeyboardNav();
     setupDragDrop();
     setupResize();
-    setupCurlSessionSelect();
   }
 
   async function checkServer() {
-    // Probe the server API to see if server.py is running
     try {
       const resp = await fetch('/api/add-call', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-      // Even a 400 means the server is up
       serverAvailable = true;
     } catch (e) {
       serverAvailable = false;
@@ -732,32 +888,34 @@ body {
     list.innerHTML = '';
 
     sessions.forEach((s) => {
-      const item = createSidebarItem(s.name, s.platform, s.callCount, () => selectSession(s.slug));
-      if (currentSession && currentSession.slug === s.slug) item.classList.add('active');
+      const item = document.createElement('div');
+      item.className = 'sidebar-item' + (currentSession && currentSession.slug === s.slug ? ' active' : '');
+
+      const badgeClass = s.platform === 'ios' ? 'badge-ios'
+        : s.platform === 'android' ? 'badge-android'
+        : s.platform === 'web' ? 'badge-web'
+        : s.platform === 'adhoc' ? 'badge-adhoc'
+        : 'badge-unknown';
+
+      item.innerHTML = `
+        <div class="sidebar-item-content">
+          <div class="name" title="${escapeHtml(s.name)}">${escapeHtml(s.name)}</div>
+          <div class="meta">
+            <span class="badge ${badgeClass}">${escapeHtml(s.platform)}</span>
+            <span>${s.callCount} call${s.callCount !== 1 ? 's' : ''}</span>
+          </div>
+        </div>
+        <button class="sidebar-delete-btn" title="Delete session" data-slug="${escapeHtml(s.slug)}" data-name="${escapeHtml(s.name)}">&#128465;</button>
+      `;
+
+      item.querySelector('.sidebar-item-content').addEventListener('click', () => selectSession(s.slug));
+      item.querySelector('.sidebar-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        window._showDeleteSessionModal(s.slug, s.name);
+      });
+
       list.appendChild(item);
     });
-
-    updateCurlSessionSelect();
-  }
-
-  function createSidebarItem(name, platform, count, onClick) {
-    const item = document.createElement('div');
-    item.className = 'sidebar-item';
-    item.onclick = onClick;
-
-    const badgeClass = platform === 'ios' ? 'badge-ios'
-      : platform === 'android' ? 'badge-android'
-      : platform === 'adhoc' ? 'badge-adhoc'
-      : 'badge-unknown';
-
-    item.innerHTML = `
-      <div class="name" title="${escapeHtml(name)}">${escapeHtml(name)}</div>
-      <div class="meta">
-        <span class="badge ${badgeClass}">${escapeHtml(platform)}</span>
-        <span>${count} call${count !== 1 ? 's' : ''}</span>
-      </div>
-    `;
-    return item;
   }
 
   async function selectSession(slug) {
@@ -769,10 +927,23 @@ body {
       currentSession = session;
       currentCallIndex = -1;
       renderSidebar();
+      renderCallToolbar();
       renderCallList(session.calls);
       clearDetail();
     } catch (e) {
       console.error('Failed to load session:', e);
+    }
+  }
+
+  // --- Call Toolbar ---
+  function renderCallToolbar() {
+    const toolbar = document.getElementById('callToolbar');
+    const title = document.getElementById('callToolbarTitle');
+    if (currentSession) {
+      title.textContent = currentSession.name;
+      toolbar.classList.add('visible');
+    } else {
+      toolbar.classList.remove('visible');
     }
   }
 
@@ -782,7 +953,10 @@ body {
     list.innerHTML = '';
 
     if (!calls || calls.length === 0) {
-      list.innerHTML = '<div class="empty-state">No API calls in this session</div>';
+      list.innerHTML = `<div class="empty-state">
+        No API calls yet<br>
+        <span style="font-size:12px;color:var(--text-muted)">Use "+ Paste cURL" or "+ Import Files" above, or drag &amp; drop Proxyman files here</span>
+      </div>`;
       return;
     }
 
@@ -810,10 +984,13 @@ body {
       } catch (e) {}
 
       const statusDisplay = isPending ? '...' : (statusCode || '\u2014');
+      const label = call.label || '';
+      const labelClass = label ? 'call-label-cell' : 'call-label-cell empty';
 
       row.innerHTML = `
         <div class="col-id">${escapeHtml(call.id)}</div>
         <div class="col-method ${methodClass}">${method}</div>
+        <div class="col-label ${labelClass}">${label ? escapeHtml(label) : '\u2014'}</div>
         <div class="col-url" title="${escapeHtml(call.request.url)}">${escapeHtml(urlPath)}</div>
         <div class="col-status ${statusClass}">${statusDisplay}</div>
       `;
@@ -855,6 +1032,15 @@ body {
       <span>Request</span>
       <span class="url-preview"><span class="${methodClass}">${method}</span> ${escapeHtml(call.request.url)}</span>
     </div>`;
+
+    // Label row
+    const label = call.label || '';
+    reqHtml += `<div class="detail-call-label" id="detailLabelRow">`;
+    reqHtml += `<span style="color:var(--text-muted);font-size:11px">Label:</span> `;
+    reqHtml += `<span class="label-tag" id="detailLabelTag">${label ? escapeHtml(label) : '<span style="color:var(--text-muted)">(none)</span>'}</span>`;
+    reqHtml += `<button class="label-edit-btn" onclick="window._startEditLabel()" title="Edit label">&#9998;</button>`;
+    reqHtml += `</div>`;
+
     reqHtml += renderSection('Headers', renderHeadersTable(call.request.headers), true);
     reqHtml += renderSection('Body', renderBody(call.request.body), false);
     reqPanel.innerHTML = reqHtml;
@@ -865,7 +1051,6 @@ body {
     const hasBody = call.response && call.response.body !== null && call.response.body !== undefined;
 
     if (isPending || (!hasBody && sc === 0)) {
-      // No response yet — show add response prompt
       const statusClass = sc >= 500 ? 'status-5xx' : sc >= 400 ? 'status-4xx' : sc >= 300 ? 'status-3xx' : sc >= 200 ? 'status-2xx' : '';
       let respHtml = `<div class="detail-label">
         <span>Response</span>
@@ -893,6 +1078,64 @@ body {
     wireToggles(reqPanel);
     wireToggles(respPanel);
   }
+
+  // --- Label editing ---
+  window._startEditLabel = function() {
+    if (!currentSession || currentCallIndex < 0) return;
+    const call = currentSession.calls[currentCallIndex];
+    const row = document.getElementById('detailLabelRow');
+    if (!row) return;
+
+    const currentLabel = call.label || '';
+    row.innerHTML = `
+      <span style="color:var(--text-muted);font-size:11px">Label:</span>
+      <input class="detail-label-input" id="labelEditInput" value="${escapeHtml(currentLabel)}" placeholder="e.g. Photo Projects List">
+      <button class="btn btn-primary" style="padding:2px 10px;font-size:11px" onclick="window._saveLabel()">Save</button>
+      <button class="btn btn-secondary" style="padding:2px 10px;font-size:11px" onclick="window._cancelEditLabel()">Cancel</button>
+    `;
+    const input = document.getElementById('labelEditInput');
+    input.focus();
+    input.select();
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') window._saveLabel();
+      if (e.key === 'Escape') window._cancelEditLabel();
+    });
+  };
+
+  window._saveLabel = async function() {
+    if (!currentSession || currentCallIndex < 0) return;
+    const input = document.getElementById('labelEditInput');
+    if (!input) return;
+
+    const newLabel = input.value.trim();
+    const call = currentSession.calls[currentCallIndex];
+
+    try {
+      const resp = await fetch('/api/update-call-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: currentSession.slug, callId: call.id, label: newLabel })
+      });
+      if (!resp.ok) throw new Error('Server error');
+
+      call.label = newLabel;
+      renderCallList(currentSession.calls);
+      renderDetail(call);
+
+      // Re-highlight the active row
+      document.querySelectorAll('.call-row').forEach((r, i) => {
+        r.classList.toggle('active', i === currentCallIndex);
+      });
+    } catch (e) {
+      alert('Failed to save label: ' + e.message);
+    }
+  };
+
+  window._cancelEditLabel = function() {
+    if (!currentSession || currentCallIndex < 0) return;
+    renderDetail(currentSession.calls[currentCallIndex]);
+  };
 
   function renderSection(title, content, startCollapsed) {
     const arrowClass = startCollapsed ? 'arrow collapsed' : 'arrow';
@@ -995,11 +1238,9 @@ body {
 
   // --- cURL parser ---
   function parseCurl(curlStr) {
-    // Normalize line continuations
     curlStr = curlStr.replace(/\\\r?\n/g, ' ');
 
     const tokens = shellSplit(curlStr);
-    // Remove 'curl' if first
     if (tokens.length > 0 && tokens[0] === 'curl') tokens.shift();
 
     let method = 'GET';
@@ -1041,7 +1282,6 @@ body {
                    '-L', '--location', '-v', '--verbose', '-i', '--include'].includes(tok)) {
         // Skip no-arg flags
       } else if (tok.startsWith('-')) {
-        // Unknown flag — skip possible arg
         if (i + 1 < tokens.length && !tokens[i + 1].startsWith('-')) i++;
       } else {
         if (!url) url = tok;
@@ -1052,7 +1292,6 @@ body {
     return { method, url, headers, body };
   }
 
-  // Simple shell-like tokenizer (handles single/double quotes)
   function shellSplit(str) {
     const tokens = [];
     let current = '';
@@ -1063,32 +1302,13 @@ body {
     for (let i = 0; i < str.length; i++) {
       const ch = str[i];
 
-      if (escape) {
-        current += ch;
-        escape = false;
-        continue;
-      }
-
-      if (ch === '\\' && !inSingle) {
-        escape = true;
-        continue;
-      }
-
-      if (ch === "'" && !inDouble) {
-        inSingle = !inSingle;
-        continue;
-      }
-
-      if (ch === '"' && !inSingle) {
-        inDouble = !inDouble;
-        continue;
-      }
+      if (escape) { current += ch; escape = false; continue; }
+      if (ch === '\\' && !inSingle) { escape = true; continue; }
+      if (ch === "'" && !inDouble) { inSingle = !inSingle; continue; }
+      if (ch === '"' && !inSingle) { inDouble = !inDouble; continue; }
 
       if ((ch === ' ' || ch === '\t') && !inSingle && !inDouble) {
-        if (current.length > 0) {
-          tokens.push(current);
-          current = '';
-        }
+        if (current.length > 0) { tokens.push(current); current = ''; }
         continue;
       }
 
@@ -1099,80 +1319,29 @@ body {
     return tokens;
   }
 
-  // --- cURL Modal ---
-  function setupCurlSessionSelect() {
-    const select = document.getElementById('curlSessionSelect');
-    const nameInput = document.getElementById('curlNewSessionName');
-    const platformGroup = document.getElementById('curlPlatformGroup');
-
-    select.addEventListener('change', () => {
-      const isNew = select.value === '__new__';
-      nameInput.style.display = isNew ? '' : 'none';
-      platformGroup.style.display = isNew ? '' : 'none';
-    });
-  }
-
-  function updateCurlSessionSelect() {
-    const select = document.getElementById('curlSessionSelect');
-    const currentVal = select.value;
-    select.innerHTML = '<option value="__new__">+ New Session...</option>';
-
-    sessions.forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = 'saved:' + s.slug;
-      opt.textContent = s.name + ' (' + s.platform + ')';
-      select.appendChild(opt);
-    });
-
-    // Restore selection
-    if (currentVal && select.querySelector(`option[value="${currentVal}"]`)) {
-      select.value = currentVal;
-    }
-    select.dispatchEvent(new Event('change'));
-  }
-
-  window._showCurlModal = function() {
-    document.getElementById('curlInput').value = '';
-    document.getElementById('curlNewSessionName').value = '';
-    document.getElementById('curlModal').classList.add('visible');
-    updateCurlSessionSelect();
-    setTimeout(() => document.getElementById('curlInput').focus(), 100);
+  // --- Create Session Modal ---
+  window._showCreateSessionModal = function() {
+    document.getElementById('createSessionName').value = '';
+    document.getElementById('createSessionPlatform').value = 'ios';
+    document.getElementById('createSessionModal').classList.add('visible');
+    setTimeout(() => document.getElementById('createSessionName').focus(), 100);
   };
 
-  window._closeCurlModal = function() {
-    document.getElementById('curlModal').classList.remove('visible');
+  window._closeCreateSessionModal = function() {
+    document.getElementById('createSessionModal').classList.remove('visible');
   };
 
-  window._importCurl = async function() {
-    const curlStr = document.getElementById('curlInput').value.trim();
-    if (!curlStr) { alert('Please paste a cURL command.'); return; }
+  window._createSession = async function() {
+    const name = document.getElementById('createSessionName').value.trim();
+    if (!name) { alert('Please enter a session name.'); return; }
 
-    const req = parseCurl(curlStr);
-    if (!req.url) { alert('Could not find a URL in the cURL command.'); return; }
+    const platform = document.getElementById('createSessionPlatform').value;
 
-    const selectVal = document.getElementById('curlSessionSelect').value;
-
-    let name, platform, slug;
-
-    if (selectVal === '__new__') {
-      name = document.getElementById('curlNewSessionName').value.trim() || 'Untitled Session';
-      platform = document.getElementById('curlPlatform').value || detectPlatformFromHeaders(req.headers) || 'unknown';
-      slug = slugify(name);
-    } else if (selectVal.startsWith('saved:')) {
-      slug = selectVal.split(':')[1];
-      const s = sessions.find(s => s.slug === slug);
-      name = s ? s.name : slug;
-      platform = s ? s.platform : 'unknown';
-    } else {
-      return;
-    }
-
-    // Save to server
     try {
-      const resp = await fetch('/api/add-call', {
+      const resp = await fetch('/api/create-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, platform, request: req })
+        body: JSON.stringify({ name, platform })
       });
 
       if (!resp.ok) {
@@ -1181,13 +1350,109 @@ body {
       }
 
       const result = await resp.json();
-      slug = result.slug;
-
-      // Reload sessions manifest and select the session
       await loadSessions();
-      await selectSession(slug);
+      await selectSession(result.slug);
+    } catch (e) {
+      alert('Failed to create session: ' + e.message + '\n\nMake sure server.py is running.');
+      return;
+    }
 
-      // Select the newly added call (last one)
+    window._closeCreateSessionModal();
+  };
+
+  // --- Delete Session ---
+  window._showDeleteSessionModal = function(slug, name) {
+    pendingDeleteSlug = slug;
+    document.getElementById('deleteSessionName').textContent = name;
+    document.getElementById('deleteSessionModal').classList.add('visible');
+  };
+
+  window._closeDeleteSessionModal = function() {
+    pendingDeleteSlug = null;
+    document.getElementById('deleteSessionModal').classList.remove('visible');
+  };
+
+  window._confirmDeleteSession = async function() {
+    if (!pendingDeleteSlug) return;
+
+    try {
+      const resp = await fetch('/api/delete-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: pendingDeleteSlug })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server error ${resp.status}`);
+      }
+
+      // If we deleted the currently selected session, clear state
+      if (currentSession && currentSession.slug === pendingDeleteSlug) {
+        currentSession = null;
+        currentCallIndex = -1;
+        renderCallToolbar();
+        document.getElementById('callList').innerHTML = '<div class="empty-state">Select a session from the sidebar<br>or create a new one with "+ New Session"</div>';
+        clearDetail();
+      }
+
+      await loadSessions();
+    } catch (e) {
+      alert('Failed to delete session: ' + e.message);
+    }
+
+    window._closeDeleteSessionModal();
+  };
+
+  // --- cURL Modal (simplified — always adds to current session) ---
+  window._showCurlModal = function() {
+    if (!currentSession) {
+      alert('Select or create a session first.');
+      return;
+    }
+    document.getElementById('curlInput').value = '';
+    document.getElementById('curlLabel').value = '';
+    document.getElementById('curlModal').classList.add('visible');
+    setTimeout(() => document.getElementById('curlInput').focus(), 100);
+  };
+
+  window._closeCurlModal = function() {
+    document.getElementById('curlModal').classList.remove('visible');
+  };
+
+  window._importCurl = async function() {
+    if (!currentSession) { alert('No session selected.'); return; }
+
+    const curlStr = document.getElementById('curlInput').value.trim();
+    if (!curlStr) { alert('Please paste a cURL command.'); return; }
+
+    const req = parseCurl(curlStr);
+    if (!req.url) { alert('Could not find a URL in the cURL command.'); return; }
+
+    const label = document.getElementById('curlLabel').value.trim();
+
+    try {
+      const resp = await fetch('/api/add-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: currentSession.name,
+          platform: currentSession.platform,
+          label: label,
+          request: req
+        })
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        throw new Error(err.error || `Server error ${resp.status}`);
+      }
+
+      const result = await resp.json();
+
+      await loadSessions();
+      await selectSession(currentSession.slug);
+
       if (currentSession && currentSession.calls.length > 0) {
         selectCall(currentSession.calls.length - 1);
       }
@@ -1198,6 +1463,22 @@ body {
     }
 
     window._closeCurlModal();
+  };
+
+  // --- File Import ---
+  window._triggerFileImport = function() {
+    if (!currentSession) { alert('Select or create a session first.'); return; }
+    document.getElementById('fileImportInput').click();
+  };
+
+  window._handleFileImport = async function(fileList) {
+    if (!currentSession || !fileList || fileList.length === 0) return;
+
+    const files = Array.from(fileList).filter(f => f.name.endsWith('.txt'));
+    if (files.length === 0) { alert('No .txt files found. Please select Proxyman export files.'); return; }
+
+    await importProxymanFiles(files);
+    document.getElementById('fileImportInput').value = '';
   };
 
   function detectPlatformFromHeaders(headers) {
@@ -1244,7 +1525,6 @@ body {
       return;
     }
 
-    // Save to server
     try {
       const resp = await fetch('/api/update-response', {
         method: 'POST',
@@ -1257,7 +1537,6 @@ body {
         throw new Error(err.error || `Server error ${resp.status}`);
       }
 
-      // Reload the session to reflect saved state
       await selectSession(slug);
       selectCall(currentCallIndex);
 
@@ -1272,18 +1551,19 @@ body {
   // --- Keyboard navigation ---
   function setupKeyboardNav() {
     document.addEventListener('keydown', (e) => {
-      // Don't capture when typing in inputs/textareas
       if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
-
-      if (!currentSession) return;
-      const calls = currentSession.calls;
-      if (!calls || calls.length === 0) return;
 
       if (e.key === 'Escape') {
         window._closeCurlModal();
         window._closeResponseModal();
+        window._closeCreateSessionModal();
+        window._closeDeleteSessionModal();
         return;
       }
+
+      if (!currentSession) return;
+      const calls = currentSession.calls;
+      if (!calls || calls.length === 0) return;
 
       if (e.key === 'ArrowDown' || e.key === 'j') {
         e.preventDefault();
@@ -1291,14 +1571,6 @@ body {
       } else if (e.key === 'ArrowUp' || e.key === 'k') {
         e.preventDefault();
         selectCall(Math.max(currentCallIndex - 1, 0));
-      }
-    });
-
-    // Also handle Escape in modals
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        window._closeCurlModal();
-        window._closeResponseModal();
       }
     });
   }
@@ -1314,7 +1586,7 @@ body {
     document.addEventListener('drop', async (e) => {
       e.preventDefault(); dragCounter = 0; overlay.classList.remove('visible');
       const files = await collectDroppedFiles(e.dataTransfer);
-      if (files.length > 0) parseDroppedFiles(files);
+      if (files.length > 0) await importProxymanFiles(files);
     });
   }
 
@@ -1354,7 +1626,7 @@ body {
     });
   }
 
-  async function parseDroppedFiles(files) {
+  async function importProxymanFiles(files) {
     const pattern = /^\[(\d+)\]\s+(Request|Response)\s+-\s+(.+)\.txt$/;
     const fileMap = {};
     for (const file of files) {
@@ -1381,36 +1653,56 @@ body {
 
     if (calls.length === 0) { alert('Could not parse any API calls.'); return; }
 
-    const platform = detectPlatformFromHeaders(calls[0].request.headers) || 'unknown';
-    const name = 'Drag & Drop Import';
+    if (serverAvailable && currentSession) {
+      // Add each call to the current session
+      for (const call of calls) {
+        try {
+          await fetch('/api/add-call', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: currentSession.name,
+              platform: currentSession.platform,
+              label: '',
+              request: call.request,
+              response: call.response
+            })
+          });
+        } catch (e) { console.error('Failed to save call:', e); }
+      }
 
-    if (serverAvailable) {
-      // Save each call to the server
+      await loadSessions();
+      await selectSession(currentSession.slug);
+    } else if (serverAvailable) {
+      // No session selected — create an ad-hoc one
+      const platform = detectPlatformFromHeaders(calls[0].request.headers) || 'unknown';
+      const name = 'Drag & Drop Import';
       let slug = null;
+
       for (const call of calls) {
         try {
           const resp = await fetch('/api/add-call', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, platform, request: call.request, response: call.response })
+            body: JSON.stringify({ name, platform, label: '', request: call.request, response: call.response })
           });
-          if (resp.ok) {
-            const result = await resp.json();
-            slug = result.slug;
-          }
+          if (resp.ok) { const result = await resp.json(); slug = result.slug; }
         } catch (e) { console.error('Failed to save call:', e); }
       }
 
-      if (slug) {
-        await loadSessions();
-        await selectSession(slug);
-      }
+      if (slug) { await loadSessions(); await selectSession(slug); }
     } else {
-      // Fallback: display in-memory only (GitHub Pages / file://)
-      const session = { name, importedAt: new Date().toISOString(), platform, calls, slug: 'drag-drop-import' };
-      calls.forEach((c, i) => c.id = String(i + 1));
+      // Offline fallback
+      const session = {
+        name: 'Drag & Drop Import',
+        importedAt: new Date().toISOString(),
+        platform: detectPlatformFromHeaders(calls[0].request.headers) || 'unknown',
+        calls, slug: 'drag-drop-import'
+      };
+      calls.forEach((c, i) => { c.id = String(i + 1); c.label = ''; });
       currentSession = session;
       currentCallIndex = -1;
+      renderCallToolbar();
       renderCallList(session.calls);
       clearDetail();
     }

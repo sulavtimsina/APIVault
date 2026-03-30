@@ -6,7 +6,26 @@ Living API documentation for mobile apps. Capture traffic with [Proxyman](https:
 
 ## Quick Start
 
-### 1. Import API calls
+### 1. Start the server
+
+```bash
+python3 server.py
+# Open http://localhost:8080
+```
+
+### 2. Create a session
+
+Click **+ New Session** in the sidebar. Enter a name (e.g. "Sprint 42 API Capture") and pick a platform (iOS / Android / Web / Other).
+
+### 3. Add API calls
+
+With a session selected, use the toolbar buttons:
+
+- **+ Paste cURL** — paste a cURL command with an optional screen/feature label
+- **+ Import Files** — pick Proxyman `.txt` export files
+- **Drag & drop** Proxyman files onto the call list
+
+### 4. Import from CLI
 
 **From a Proxyman export:**
 ```bash
@@ -18,19 +37,16 @@ python3 import_session.py folder ./Raw_03-27-2026-14-33-50.folder/ "Photo Projec
 python3 import_session.py curl "Photo Projects List" -c 'curl -X POST https://api.example.com/v1/load -H "Content-Type: application/json" -d "{}"'
 ```
 
+**With a screen/feature label:**
+```bash
+python3 import_session.py curl "Photo Projects List" --label "Projects Grid" -c 'curl https://api.example.com/projects'
+python3 import_session.py folder ./export.folder/ "Cart Flow" --label "Cart Page" --redact
+```
+
 **Add a response later:**
 ```bash
 python3 import_session.py add-response photo-projects-list 1 --body '{"status": "OK"}'
 ```
-
-### 2. View
-
-```bash
-python3 server.py
-# Open http://localhost:8080
-```
-
-`server.py` serves the viewer **and** saves changes you make in the browser (adding cURL calls, adding response bodies) directly to the `data/` JSON files on disk. Everything persists across restarts.
 
 ## Import Commands
 
@@ -42,6 +58,7 @@ python3 import_session.py folder <proxyman_folder> <screen_name> [options]
 
 | Flag | Description |
 |------|-------------|
+| `--label "Screen Name"` | Screen/feature label applied to all imported calls |
 | `--platform ios\|android` | Set platform (auto-detected from headers if omitted) |
 | `--redact` | Replace `Authorization`, `Cookie`, `Set-Cookie`, `x-api-key` with `[REDACTED]` |
 | `--data-dir ./data` | Custom data directory |
@@ -57,6 +74,7 @@ python3 import_session.py curl <screen_name> [options]
 | Flag | Description |
 |------|-------------|
 | `-c`, `--command` | cURL command string. If omitted, reads from stdin |
+| `--label "Screen Name"` | Screen/feature label for this call |
 | `--platform ios\|android` | Set platform (auto-detected from headers if omitted) |
 | `--redact` | Redact sensitive headers |
 
@@ -98,18 +116,37 @@ python3 import_session.py add-response cart-checkout 1 --body-file response.json
 pbpaste | python3 import_session.py add-response cart-checkout 1 --status 200
 ```
 
+## Server API
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/create-session` | POST | Create empty session `{name, platform}` |
+| `/api/add-call` | POST | Add a call to a session `{name, platform, label, request, response?}` |
+| `/api/update-response` | POST | Update response for a call `{slug, callId, statusCode, body}` |
+| `/api/update-call-label` | POST | Update label for a call `{slug, callId, label}` |
+| `/api/delete-session` | POST | Delete a session `{slug}` |
+
 ## Web Viewer Features
 
 All changes made in the browser are **saved to disk** when `server.py` is running.
 
-### + cURL button
-Click **+ cURL** in the sidebar to paste a cURL command. It's saved to the session JSON on disk immediately.
+### Session Management
+- **+ New Session** — create a session (name + platform) from the sidebar
+- **Delete** — hover over a session in the sidebar to reveal the trash icon; confirms before deleting
+
+### Adding Calls
+With a session selected, the toolbar shows:
+- **+ Paste cURL** — paste a cURL command with an optional screen/feature label
+- **+ Import Files** — pick Proxyman `.txt` export files from disk
+
+### Labels
+Each API call can have a **screen/feature label** (e.g. "Photo Projects List", "Cart Page") to identify which screen triggered it. Labels appear in the call list table and can be edited inline in the detail panel.
 
 ### Add Response
-When viewing a call with no response, click **+ Add Response Body** in the response panel to paste the JSON response. Saved to disk.
+When viewing a call with no response, click **+ Add Response Body** in the response panel to paste the JSON response.
 
 ### Drag & Drop
-Drag a Proxyman `.folder` export onto the page. If `server.py` is running, all calls are saved to disk.
+Drag a Proxyman `.folder` export onto the page. If a session is selected, calls are added to it.
 
 ### Keyboard Shortcuts
 
@@ -156,6 +193,7 @@ GitHub Pages deploys a read-only viewer (no `server.py` = no saving). Use it for
   "calls": [
     {
       "id": "1",
+      "label": "Projects Grid",
       "request": {
         "method": "POST",
         "url": "https://api.example.com/v1/load",
